@@ -1,0 +1,656 @@
+2026-08-01 18:23:21,713 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-01 18:23:22,095 - KDynamics - INFO - Starting K Dynamics Business Management System
+2026-08-01 18:23:22,096 - KDynamics - INFO - Database initialized.
+2026-08-01 18:37:07,436 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-01 18:37:07,488 - KDynamics - INFO - Starting K Dynamics Business Management System
+2026-08-01 18:37:07,488 - KDynamics - INFO - Database initialized.
+2026-08-01 18:37:07,542 - KDynamics - INFO - First run detected. Launching setup window.
+2026-08-01 18:40:25,660 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-01 18:40:25,716 - KDynamics - INFO - Starting K Dynamics Business Management System
+2026-08-01 18:40:25,717 - KDynamics - INFO - Database initialized.
+2026-08-01 18:40:25,775 - KDynamics - INFO - First run detected. Launching setup window.
+2026-08-01 18:41:55,833 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-01 18:41:55,891 - KDynamics - INFO - Starting K Dynamics Business Management System
+2026-08-01 18:41:55,892 - KDynamics - INFO - Database initialized.
+2026-08-01 18:41:55,954 - KDynamics - INFO - First run detected. Launching setup window.
+2026-08-01 18:44:56,717 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-01 18:44:56,774 - KDynamics - INFO - Starting K Dynamics Business Management System
+2026-08-01 18:44:56,775 - KDynamics - INFO - Database initialized.
+2026-08-01 18:44:56,813 - KDynamics - INFO - Showing splash screen.
+2026-08-01 18:44:59,361 - KDynamics - INFO - First run detected. Launching setup window.
+2026-08-01 18:45:42,755 - KDynamics - INFO - User 'Shahbaz' logged in successfully.
+2026-08-01 18:51:55,881 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-01 18:51:55,928 - KDynamics - INFO - Starting K Dynamics Business Management System
+2026-08-01 18:51:55,928 - KDynamics - INFO - Database initialized.
+2026-08-01 18:51:55,964 - KDynamics - INFO - Showing splash screen.
+2026-08-01 18:51:58,819 - KDynamics - INFO - Users exist. Launching login window.
+2026-08-01 19:01:54,504 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-01 19:01:54,559 - KDynamics - INFO - Starting K Dynamics Business Management System
+2026-08-01 19:01:54,560 - KDynamics - INFO - Database initialized.
+2026-08-01 19:01:54,608 - KDynamics - INFO - Showing splash screen.
+2026-08-01 19:01:58,959 - KDynamics - INFO - Users exist. Launching login window.
+2026-08-01 19:06:34,789 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-01 19:06:34,847 - KDynamics - INFO - Starting K Dynamics Business Management System
+2026-08-01 19:06:34,847 - KDynamics - INFO - Database initialized.
+2026-08-01 19:06:34,896 - KDynamics - INFO - Showing splash screen.
+2026-08-01 19:06:39,156 - KDynamics - INFO - Users exist. Launching login window.
+2026-08-01 19:17:08,367 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-01 19:17:08,684 - KDynamics - INFO - User 'testuser_x' created with role 'admin'.
+2026-08-01 19:17:09,613 - KDynamics - INFO - Password changed for user id 2.
+2026-08-01 19:17:10,302 - KDynamics - INFO - Password reset for email 'testx@example.com'.
+2026-08-01 19:17:49,900 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-01 19:17:49,950 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-01 19:17:49,988 - KDynamics - INFO - Showing splash screen.
+2026-08-01 19:17:54,242 - KDynamics - INFO - Users exist — showing login window.
+2026-08-01 19:18:47,863 - KDynamics - INFO - User 'Shahbaz Nawaz' created with role 'admin'.
+2026-08-01 19:19:14,198 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-01 19:22:08,840 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-01 19:22:08,898 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-01 19:22:08,940 - KDynamics - INFO - Showing splash screen.
+2026-08-01 19:22:13,171 - KDynamics - INFO - Users exist — showing login window.
+2026-08-01 19:22:32,214 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-01 19:23:06,120 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-01 19:23:06,179 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-01 19:23:06,216 - KDynamics - INFO - Showing splash screen.
+2026-08-01 19:23:10,406 - KDynamics - INFO - Users exist — showing login window.
+2026-08-01 19:24:50,731 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-01 19:24:50,797 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-01 19:24:50,837 - KDynamics - INFO - Showing splash screen.
+2026-08-01 19:24:55,059 - KDynamics - INFO - Users exist — showing login window.
+2026-08-01 19:25:16,113 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-01 19:26:31,277 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-01 19:26:31,326 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-01 19:26:31,365 - KDynamics - INFO - Showing splash screen.
+2026-08-01 19:26:35,593 - KDynamics - INFO - Users exist — showing login window.
+2026-08-01 19:26:58,551 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-01 19:49:45,105 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-01 19:49:45,171 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-01 19:49:45,225 - KDynamics - INFO - Companies seeded successfully.
+2026-08-01 19:49:45,271 - KDynamics - INFO - Showing splash screen.
+2026-08-01 19:49:49,594 - KDynamics - INFO - Users exist — showing login window.
+2026-08-01 19:50:27,497 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-01 19:55:07,421 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-01 19:55:07,535 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-01 19:55:07,725 - KDynamics - INFO - Showing splash screen.
+2026-08-01 19:55:12,774 - KDynamics - INFO - Users exist — showing login window.
+2026-08-01 19:55:25,657 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-01 20:20:24,471 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-01 20:20:24,602 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-01 20:20:24,785 - KDynamics - INFO - Showing splash screen.
+2026-08-01 20:20:30,273 - KDynamics - INFO - Users exist — showing login window.
+2026-08-01 20:20:47,389 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-01 20:53:06,653 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-01 20:53:06,759 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-01 20:53:06,888 - KDynamics - INFO - Showing splash screen.
+2026-08-01 20:53:11,928 - KDynamics - INFO - Users exist — showing login window.
+2026-08-01 20:53:24,245 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-01 20:54:02,704 - KDynamics - ERROR - CSV Import Failed: CSV must contain 'Customer Name' and 'Phone Number' columns.
+2026-08-01 20:58:57,135 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-01 20:58:57,229 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-01 20:58:57,347 - KDynamics - INFO - Showing splash screen.
+2026-08-01 20:59:02,188 - KDynamics - INFO - Users exist — showing login window.
+2026-08-01 20:59:16,614 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-01 21:00:13,209 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-01 21:00:13,316 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-01 21:00:13,433 - KDynamics - INFO - Showing splash screen.
+2026-08-01 21:00:18,472 - KDynamics - INFO - Users exist — showing login window.
+2026-08-01 21:00:32,938 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-01 21:00:54,827 - KDynamics - ERROR - CSV Import Failed: CSV must contain 'Customer Name' and 'Phone Number' columns.
+2026-08-01 21:15:01,258 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-01 21:15:01,365 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-01 21:15:01,483 - KDynamics - INFO - Showing splash screen.
+2026-08-01 21:15:06,294 - KDynamics - INFO - Users exist — showing login window.
+2026-08-01 21:15:19,104 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-01 21:15:50,614 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-01 21:15:50,705 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-01 21:15:50,811 - KDynamics - INFO - Showing splash screen.
+2026-08-01 21:15:55,546 - KDynamics - INFO - Users exist — showing login window.
+2026-08-01 21:16:05,826 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-01 21:17:59,798 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-01 21:17:59,881 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-01 21:17:59,991 - KDynamics - INFO - Showing splash screen.
+2026-08-01 21:18:04,888 - KDynamics - INFO - Users exist — showing login window.
+2026-08-01 21:18:23,980 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-01 21:18:34,624 - KDynamics - WARNING - Row 2 failed validation. Name: '17', Phone: '', Raw Row: {'ID': '1', 'Name': '17', 'Phone': '', 'Address': '', 'Date Added': '', 'Actions': ''}
+2026-08-01 21:18:34,625 - KDynamics - WARNING - Row 3 failed validation. Name: 'ABUBAKAR SHAHBAZ', Phone: '', Raw Row: {'ID': '2', 'Name': 'ABUBAKAR SHAHBAZ', 'Phone': '', 'Address': '', 'Date Added': '', 'Actions': ''}
+2026-08-01 21:18:34,625 - KDynamics - WARNING - Row 4 failed validation. Name: 'ACM GROUP OF INDUSTRIES', Phone: '', Raw Row: {'ID': '3', 'Name': 'ACM GROUP OF INDUSTRIES', 'Phone': '', 'Address': '', 'Date Added': '', 'Actions': ''}
+2026-08-01 21:18:34,625 - KDynamics - WARNING - Row 5 failed validation. Name: 'ADEEL GILL', Phone: '', Raw Row: {'ID': '4', 'Name': 'ADEEL GILL', 'Phone': '', 'Address': '', 'Date Added': '', 'Actions': ''}
+2026-08-01 21:18:34,625 - KDynamics - WARNING - Row 6 failed validation. Name: 'ADNAN', Phone: '', Raw Row: {'ID': '5', 'Name': 'ADNAN', 'Phone': '', 'Address': '', 'Date Added': '', 'Actions': ''}
+2026-08-01 21:19:20,382 - KDynamics - WARNING - Row 2 failed validation. Name: '17', Phone: '', Raw Row: {'ID': '1', 'Name': '17', 'Phone': '', 'Address': '', 'Date Added': '', 'Actions': ''}
+2026-08-01 21:19:20,382 - KDynamics - WARNING - Row 3 failed validation. Name: 'ABUBAKAR SHAHBAZ', Phone: '', Raw Row: {'ID': '2', 'Name': 'ABUBAKAR SHAHBAZ', 'Phone': '', 'Address': '', 'Date Added': '', 'Actions': ''}
+2026-08-01 21:19:20,382 - KDynamics - WARNING - Row 4 failed validation. Name: 'ACM GROUP OF INDUSTRIES', Phone: '', Raw Row: {'ID': '3', 'Name': 'ACM GROUP OF INDUSTRIES', 'Phone': '', 'Address': '', 'Date Added': '', 'Actions': ''}
+2026-08-01 21:19:20,383 - KDynamics - WARNING - Row 5 failed validation. Name: 'ADEEL GILL', Phone: '', Raw Row: {'ID': '4', 'Name': 'ADEEL GILL', 'Phone': '', 'Address': '', 'Date Added': '', 'Actions': ''}
+2026-08-01 21:19:20,383 - KDynamics - WARNING - Row 6 failed validation. Name: 'ADNAN', Phone: '', Raw Row: {'ID': '5', 'Name': 'ADNAN', 'Phone': '', 'Address': '', 'Date Added': '', 'Actions': ''}
+2026-08-01 21:23:44,680 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-01 21:23:44,767 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-01 21:23:44,861 - KDynamics - INFO - Showing splash screen.
+2026-08-01 21:23:49,884 - KDynamics - INFO - Users exist — showing login window.
+2026-08-01 21:24:04,243 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-04 16:08:35,180 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-04 16:08:35,417 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-04 16:08:35,558 - KDynamics - INFO - Showing splash screen.
+2026-08-04 16:08:40,989 - KDynamics - INFO - Users exist — showing login window.
+2026-08-04 16:08:50,784 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-04 16:08:50,887 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-04 16:08:50,999 - KDynamics - INFO - Showing splash screen.
+2026-08-04 16:08:56,591 - KDynamics - INFO - Users exist — showing login window.
+2026-08-04 16:09:13,531 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-04 16:17:34,774 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-04 16:17:34,825 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-04 16:17:34,881 - KDynamics - INFO - Showing splash screen.
+2026-08-04 16:17:39,034 - KDynamics - INFO - Users exist — showing login window.
+2026-08-04 16:17:54,079 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-04 16:29:51,678 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-04 16:29:51,730 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-04 16:29:51,787 - KDynamics - INFO - Showing splash screen.
+2026-08-04 16:29:55,996 - KDynamics - INFO - Users exist — showing login window.
+2026-08-04 16:30:08,418 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-04 16:33:07,612 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-04 16:33:07,662 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-04 16:33:07,726 - KDynamics - INFO - Showing splash screen.
+2026-08-04 16:33:11,943 - KDynamics - INFO - Users exist — showing login window.
+2026-08-04 16:33:25,024 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-04 16:40:44,757 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-04 16:40:44,810 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-04 16:40:44,866 - KDynamics - INFO - Showing splash screen.
+2026-08-04 16:40:48,993 - KDynamics - INFO - Users exist — showing login window.
+2026-08-04 16:41:05,295 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-04 16:47:32,138 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-04 16:47:32,188 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-04 16:47:32,245 - KDynamics - INFO - Showing splash screen.
+2026-08-04 16:47:36,388 - KDynamics - INFO - Users exist — showing login window.
+2026-08-04 16:47:49,740 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-04 17:06:03,629 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-04 17:06:03,691 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-04 17:06:03,751 - KDynamics - INFO - Showing splash screen.
+2026-08-04 17:06:07,960 - KDynamics - INFO - Users exist — showing login window.
+2026-08-04 17:06:19,129 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-04 17:35:49,249 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-04 17:35:49,377 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-04 17:35:49,473 - KDynamics - INFO - Showing splash screen.
+2026-08-04 17:35:54,560 - KDynamics - INFO - Users exist — showing login window.
+2026-08-04 17:36:04,512 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-04 17:56:15,950 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-04 17:56:16,052 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-04 17:56:16,154 - KDynamics - INFO - Showing splash screen.
+2026-08-04 17:56:21,194 - KDynamics - INFO - Users exist — showing login window.
+2026-08-04 17:56:33,063 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-04 18:02:28,341 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-04 18:02:28,450 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-04 18:02:28,577 - KDynamics - INFO - Showing splash screen.
+2026-08-04 18:02:33,888 - KDynamics - INFO - Users exist — showing login window.
+2026-08-04 18:02:59,119 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-04 18:11:09,519 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-04 18:11:09,615 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-04 18:11:09,739 - KDynamics - INFO - Showing splash screen.
+2026-08-04 18:11:14,515 - KDynamics - INFO - Users exist — showing login window.
+2026-08-04 18:11:34,028 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-04 18:11:34,120 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-04 18:11:34,244 - KDynamics - INFO - Showing splash screen.
+2026-08-04 18:11:39,714 - KDynamics - INFO - Users exist — showing login window.
+2026-08-04 18:11:53,460 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-04 18:13:00,537 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-04 18:13:00,604 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-04 18:13:00,690 - KDynamics - INFO - Showing splash screen.
+2026-08-04 18:13:06,147 - KDynamics - INFO - Users exist — showing login window.
+2026-08-04 18:13:16,903 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-04 18:50:16,146 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-04 18:50:16,252 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-04 18:50:16,373 - KDynamics - INFO - Showing splash screen.
+2026-08-04 18:50:21,460 - KDynamics - INFO - Users exist — showing login window.
+2026-08-04 18:51:03,711 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-04 19:10:21,027 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-04 19:10:21,125 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-04 19:10:21,229 - KDynamics - INFO - Showing splash screen.
+2026-08-04 19:10:26,475 - KDynamics - INFO - Users exist — showing login window.
+2026-08-04 19:10:44,344 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-04 19:18:37,170 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-04 19:20:43,642 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-04 19:20:43,747 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-04 19:20:43,859 - KDynamics - INFO - Showing splash screen.
+2026-08-04 19:20:49,003 - KDynamics - INFO - Users exist — showing login window.
+2026-08-04 19:22:47,768 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 16:12:09,723 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 16:12:09,834 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 16:12:09,984 - KDynamics - INFO - Showing splash screen.
+2026-08-05 16:12:14,598 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 16:12:35,970 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 16:48:55,616 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 16:48:55,671 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 16:48:55,736 - KDynamics - INFO - Showing splash screen.
+2026-08-05 16:48:59,962 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 16:49:15,383 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 17:02:53,347 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 17:02:53,406 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 17:02:53,471 - KDynamics - INFO - Showing splash screen.
+2026-08-05 17:02:57,646 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 17:03:10,983 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 17:10:21,477 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 17:10:21,531 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 17:10:21,591 - KDynamics - INFO - Showing splash screen.
+2026-08-05 17:10:25,860 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 17:10:37,945 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 17:20:52,887 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 17:20:52,941 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 17:20:53,001 - KDynamics - INFO - Showing splash screen.
+2026-08-05 17:20:57,187 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 17:21:08,167 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 17:24:52,824 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 17:24:52,893 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 17:24:52,964 - KDynamics - INFO - Showing splash screen.
+2026-08-05 17:24:57,188 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 17:25:12,560 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 17:28:49,510 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 17:28:49,565 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 17:28:49,631 - KDynamics - INFO - Showing splash screen.
+2026-08-05 17:28:53,830 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 17:29:15,783 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 17:33:15,485 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 17:33:15,549 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 17:33:15,619 - KDynamics - INFO - Showing splash screen.
+2026-08-05 17:33:20,072 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 17:42:36,064 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 17:48:20,590 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 17:48:20,677 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 17:48:20,801 - KDynamics - INFO - Showing splash screen.
+2026-08-05 17:48:25,927 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 17:48:37,081 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 18:03:50,214 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 18:03:50,322 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 18:03:50,446 - KDynamics - INFO - Showing splash screen.
+2026-08-05 18:03:55,429 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 18:04:05,512 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 18:18:22,647 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 18:18:22,739 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 18:18:22,842 - KDynamics - INFO - Showing splash screen.
+2026-08-05 18:18:27,949 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 18:18:43,705 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 18:19:30,064 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 18:19:30,197 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 18:19:30,330 - KDynamics - INFO - Showing splash screen.
+2026-08-05 18:19:35,381 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 18:19:48,248 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 18:28:50,821 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 18:28:50,931 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 18:28:51,073 - KDynamics - INFO - Showing splash screen.
+2026-08-05 18:28:56,207 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 18:29:05,630 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 18:31:43,431 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 18:31:43,543 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 18:31:43,671 - KDynamics - INFO - Showing splash screen.
+2026-08-05 18:31:48,609 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 18:31:59,197 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 19:15:05,138 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 19:15:05,300 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 19:15:05,445 - KDynamics - INFO - Showing splash screen.
+2026-08-05 19:15:10,962 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 19:15:28,955 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 19:24:54,426 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 19:24:54,514 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 19:24:54,621 - KDynamics - INFO - Showing splash screen.
+2026-08-05 19:25:00,412 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 19:25:26,726 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 19:36:06,231 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 19:36:06,352 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 19:36:06,466 - KDynamics - INFO - Showing splash screen.
+2026-08-05 19:36:11,761 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 19:36:23,459 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 19:39:47,069 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 19:39:47,180 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 19:39:47,301 - KDynamics - INFO - Showing splash screen.
+2026-08-05 19:39:52,299 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 19:40:01,793 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 19:47:43,020 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 19:47:43,119 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 19:47:43,260 - KDynamics - INFO - Showing splash screen.
+2026-08-05 19:47:48,030 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 19:48:32,304 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 20:24:55,244 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 20:24:55,334 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 20:24:55,441 - KDynamics - INFO - Showing splash screen.
+2026-08-05 20:25:00,594 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 20:25:14,123 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 20:31:34,157 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 20:31:34,245 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 20:31:34,351 - KDynamics - INFO - Showing splash screen.
+2026-08-05 20:31:39,516 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 20:32:04,193 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 20:40:14,616 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 20:40:14,772 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 20:40:14,928 - KDynamics - INFO - Showing splash screen.
+2026-08-05 20:40:20,536 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 20:40:31,590 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 20:46:55,459 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 20:46:55,588 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 20:46:55,722 - KDynamics - INFO - Showing splash screen.
+2026-08-05 20:47:01,592 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 20:47:21,684 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 20:51:32,404 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 20:51:32,539 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 20:51:32,702 - KDynamics - INFO - Showing splash screen.
+2026-08-05 20:51:38,734 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 20:51:53,092 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-05 20:54:50,988 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-05 20:54:51,091 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-05 20:54:51,220 - KDynamics - INFO - Showing splash screen.
+2026-08-05 20:54:56,491 - KDynamics - INFO - Users exist — showing login window.
+2026-08-05 20:55:35,756 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-06 14:21:11,855 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-06 14:21:12,054 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-06 14:21:12,304 - KDynamics - INFO - Showing splash screen.
+2026-08-06 14:21:17,946 - KDynamics - INFO - Users exist — showing login window.
+2026-08-06 14:21:44,682 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-06 14:31:46,503 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-06 14:31:46,631 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-06 14:31:46,773 - KDynamics - INFO - Showing splash screen.
+2026-08-06 14:31:51,833 - KDynamics - INFO - Users exist — showing login window.
+2026-08-06 14:32:13,253 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-06 14:36:52,336 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-06 14:39:23,312 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-06 14:39:56,831 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-06 14:40:32,459 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-06 14:41:09,210 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-06 14:41:45,745 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-06 14:42:21,927 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-06 14:43:31,540 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-06 14:43:31,678 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-06 14:43:31,846 - KDynamics - INFO - Showing splash screen.
+2026-08-06 14:43:37,093 - KDynamics - INFO - Users exist — showing login window.
+2026-08-06 14:43:57,213 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-06 15:01:51,895 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-06 15:01:52,048 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-06 15:01:52,311 - KDynamics - INFO - Showing splash screen.
+2026-08-06 15:01:58,010 - KDynamics - INFO - Users exist — showing login window.
+2026-08-06 15:02:16,092 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-06 15:11:14,660 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-06 15:11:14,986 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-06 15:11:15,185 - KDynamics - INFO - Showing splash screen.
+2026-08-06 15:11:20,970 - KDynamics - INFO - Users exist — showing login window.
+2026-08-06 15:11:34,211 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-06 15:38:00,828 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-06 15:38:00,887 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-06 15:38:00,957 - KDynamics - INFO - Showing splash screen.
+2026-08-06 15:38:05,128 - KDynamics - INFO - Users exist — showing login window.
+2026-08-06 15:38:30,781 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-06 15:39:00,452 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-06 15:39:00,512 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-06 15:39:00,581 - KDynamics - INFO - Showing splash screen.
+2026-08-06 15:39:04,754 - KDynamics - INFO - Users exist — showing login window.
+2026-08-06 15:39:16,502 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-06 16:46:27,708 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-06 16:46:27,791 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-06 16:46:27,874 - KDynamics - INFO - Showing splash screen.
+2026-08-06 16:46:32,068 - KDynamics - INFO - Users exist — showing login window.
+2026-08-06 16:46:47,082 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-06 16:53:05,634 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-06 16:53:05,699 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-06 16:53:05,782 - KDynamics - INFO - Showing splash screen.
+2026-08-06 16:53:09,986 - KDynamics - INFO - Users exist — showing login window.
+2026-08-06 16:53:22,806 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-07 16:34:33,130 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-07 16:34:33,305 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-07 16:34:33,521 - KDynamics - INFO - Showing splash screen.
+2026-08-07 16:34:38,692 - KDynamics - INFO - Users exist — showing login window.
+2026-08-07 16:34:49,836 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-07 17:43:37,385 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-07 17:43:37,501 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-07 17:43:37,642 - KDynamics - INFO - Showing splash screen.
+2026-08-07 17:43:42,769 - KDynamics - INFO - Users exist — showing login window.
+2026-08-07 17:44:05,092 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-07 17:46:47,419 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-07 17:46:47,562 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-07 17:46:47,722 - KDynamics - INFO - Showing splash screen.
+2026-08-07 17:46:53,088 - KDynamics - INFO - Users exist — showing login window.
+2026-08-07 17:47:14,048 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-07 17:47:51,039 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-07 17:47:51,192 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-07 17:47:51,330 - KDynamics - INFO - Showing splash screen.
+2026-08-07 17:47:56,159 - KDynamics - INFO - Users exist — showing login window.
+2026-08-07 17:48:06,359 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-07 18:08:42,575 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-07 18:09:41,245 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-07 18:10:13,775 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-07 18:11:03,397 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-07 18:11:03,548 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-07 18:11:03,693 - KDynamics - INFO - Showing splash screen.
+2026-08-07 18:11:08,506 - KDynamics - INFO - Users exist — showing login window.
+2026-08-07 18:11:23,452 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-07 18:30:56,458 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-07 18:30:56,557 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-07 18:30:56,691 - KDynamics - INFO - Showing splash screen.
+2026-08-07 18:31:01,586 - KDynamics - INFO - Users exist — showing login window.
+2026-08-07 18:31:13,041 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-07 18:37:04,555 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-07 18:37:04,650 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-07 18:37:04,767 - KDynamics - INFO - Showing splash screen.
+2026-08-07 18:37:09,552 - KDynamics - INFO - Users exist — showing login window.
+2026-08-07 18:37:23,849 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-07 18:40:55,272 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-07 18:40:55,370 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-07 18:40:55,502 - KDynamics - INFO - Showing splash screen.
+2026-08-07 18:41:00,291 - KDynamics - INFO - Users exist — showing login window.
+2026-08-07 18:41:09,712 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-07 19:10:20,062 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-07 19:10:20,148 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-07 19:10:20,234 - KDynamics - INFO - Showing splash screen.
+2026-08-07 19:10:24,376 - KDynamics - INFO - Users exist — showing login window.
+2026-08-07 19:10:35,958 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-07 20:15:09,357 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-07 20:15:09,488 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-07 20:15:09,651 - KDynamics - INFO - Showing splash screen.
+2026-08-07 20:15:14,348 - KDynamics - INFO - Users exist — showing login window.
+2026-08-07 20:15:38,362 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-07 22:45:41,585 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-07 22:45:41,759 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-07 22:45:41,955 - KDynamics - INFO - Showing splash screen.
+2026-08-07 22:45:47,354 - KDynamics - INFO - Users exist — showing login window.
+2026-08-07 22:45:59,330 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-07 23:21:54,679 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-07 23:21:54,807 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-07 23:21:54,945 - KDynamics - INFO - Showing splash screen.
+2026-08-07 23:21:59,998 - KDynamics - INFO - Users exist — showing login window.
+2026-08-07 23:22:12,876 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-07 23:40:21,473 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-07 23:40:21,582 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-07 23:40:21,758 - KDynamics - INFO - Showing splash screen.
+2026-08-07 23:40:26,488 - KDynamics - INFO - Users exist — showing login window.
+2026-08-07 23:40:37,807 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 14:53:57,445 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 14:53:57,547 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 14:53:57,739 - KDynamics - INFO - Showing splash screen.
+2026-08-08 14:54:02,055 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 14:54:12,973 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 15:02:02,103 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 15:02:02,178 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 15:02:02,268 - KDynamics - INFO - Showing splash screen.
+2026-08-08 15:02:06,473 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 15:02:16,848 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 15:04:04,711 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 15:04:04,783 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 15:04:04,869 - KDynamics - INFO - Showing splash screen.
+2026-08-08 15:04:09,033 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 15:04:57,856 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 15:04:57,936 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 15:04:58,037 - KDynamics - INFO - Showing splash screen.
+2026-08-08 15:05:02,274 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 15:05:11,023 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 15:08:08,811 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 15:08:08,883 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 15:08:08,975 - KDynamics - INFO - Showing splash screen.
+2026-08-08 15:08:13,159 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 15:08:23,688 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 15:08:23,763 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 15:08:23,849 - KDynamics - INFO - Showing splash screen.
+2026-08-08 15:08:28,103 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 15:11:55,172 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 15:11:55,243 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 15:11:55,336 - KDynamics - INFO - Showing splash screen.
+2026-08-08 15:11:59,479 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 15:12:16,624 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 15:31:34,483 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 15:31:34,558 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 15:31:34,643 - KDynamics - INFO - Showing splash screen.
+2026-08-08 15:31:38,802 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 15:31:51,186 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 15:37:03,931 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 15:37:04,003 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 15:37:04,087 - KDynamics - INFO - Showing splash screen.
+2026-08-08 15:37:08,205 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 15:37:18,683 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 15:41:51,675 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 15:42:35,470 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 15:44:31,895 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 15:45:23,939 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 15:45:24,009 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 15:45:24,100 - KDynamics - INFO - Showing splash screen.
+2026-08-08 15:45:28,252 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 15:45:37,521 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 15:49:59,691 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 15:49:59,761 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 15:49:59,848 - KDynamics - INFO - Showing splash screen.
+2026-08-08 15:50:03,999 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 15:50:16,188 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 15:55:27,863 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 15:55:27,935 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 15:55:28,024 - KDynamics - INFO - Showing splash screen.
+2026-08-08 15:55:32,153 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 15:55:40,995 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 15:58:01,424 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 15:58:01,497 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 15:58:01,583 - KDynamics - INFO - Showing splash screen.
+2026-08-08 15:58:05,737 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 15:58:15,747 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 16:45:54,372 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 16:45:54,507 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 16:45:54,666 - KDynamics - INFO - Showing splash screen.
+2026-08-08 16:45:59,865 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 16:46:14,972 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 17:09:43,989 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 17:12:22,574 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 17:12:22,725 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 17:12:22,901 - KDynamics - INFO - Showing splash screen.
+2026-08-08 17:12:28,089 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 17:12:41,760 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 17:35:35,194 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 17:36:16,528 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 17:36:16,649 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 17:36:16,834 - KDynamics - INFO - Showing splash screen.
+2026-08-08 17:36:21,961 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 17:36:33,208 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 18:01:49,993 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 18:01:50,122 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 18:01:50,297 - KDynamics - INFO - Showing splash screen.
+2026-08-08 18:01:55,138 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 18:02:23,101 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 18:06:52,620 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 18:10:02,834 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 18:10:38,376 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 18:11:22,055 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 18:11:54,364 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 18:12:28,035 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 18:13:02,427 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 18:13:46,154 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 18:13:46,310 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 18:13:46,503 - KDynamics - INFO - Showing splash screen.
+2026-08-08 18:13:51,653 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 18:14:04,100 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 18:26:00,284 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 18:30:04,652 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 18:31:10,551 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 18:32:26,661 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 18:33:25,323 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 18:33:25,474 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 18:33:25,679 - KDynamics - INFO - Showing splash screen.
+2026-08-08 18:33:30,914 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 18:33:43,694 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 18:45:16,809 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 18:45:16,928 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 18:45:17,127 - KDynamics - INFO - Showing splash screen.
+2026-08-08 18:45:22,018 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 18:45:35,154 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 19:10:27,191 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 19:10:27,349 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 19:10:27,519 - KDynamics - INFO - Showing splash screen.
+2026-08-08 19:10:32,531 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 19:10:43,629 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 19:11:57,090 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 19:11:57,207 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 19:11:57,368 - KDynamics - INFO - Showing splash screen.
+2026-08-08 19:12:02,157 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 19:12:11,290 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 19:12:11,422 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 19:12:11,608 - KDynamics - INFO - Showing splash screen.
+2026-08-08 19:12:16,533 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 19:12:24,558 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 19:12:24,718 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 19:12:24,877 - KDynamics - INFO - Showing splash screen.
+2026-08-08 19:12:29,687 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 19:15:39,778 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 19:15:39,924 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 19:15:40,093 - KDynamics - INFO - Showing splash screen.
+2026-08-08 19:15:44,837 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 19:16:00,196 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 19:23:11,796 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 19:23:11,920 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 19:23:12,081 - KDynamics - INFO - Showing splash screen.
+2026-08-08 19:23:16,889 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 19:23:32,370 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 19:23:53,947 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 19:23:54,091 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 19:23:54,250 - KDynamics - INFO - Showing splash screen.
+2026-08-08 19:23:58,967 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 19:24:09,001 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 19:27:30,848 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 19:27:30,975 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 19:27:31,113 - KDynamics - INFO - Showing splash screen.
+2026-08-08 19:27:35,949 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 19:30:57,567 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 19:30:57,737 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 19:30:57,910 - KDynamics - INFO - Showing splash screen.
+2026-08-08 19:31:02,979 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 19:31:14,330 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 19:31:14,599 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 19:31:14,898 - KDynamics - INFO - Showing splash screen.
+2026-08-08 19:31:20,832 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 19:31:26,514 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 19:31:26,664 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 19:31:26,822 - KDynamics - INFO - Showing splash screen.
+2026-08-08 19:31:31,824 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 19:31:42,946 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 19:31:52,101 - KDynamics - INFO - Reloading main window for theme change.
+2026-08-08 19:31:52,159 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 19:32:08,407 - KDynamics - INFO - Reloading main window for theme change.
+2026-08-08 19:32:08,464 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 19:32:17,358 - KDynamics - INFO - Reloading main window for theme change.
+2026-08-08 19:32:17,379 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 19:58:49,859 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 19:58:49,935 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 19:58:50,022 - KDynamics - INFO - Showing splash screen.
+2026-08-08 19:58:54,227 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 19:59:03,615 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 20:07:55,775 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 20:07:55,856 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 20:07:55,945 - KDynamics - INFO - Showing splash screen.
+2026-08-08 20:08:00,079 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 20:08:12,021 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 20:16:33,796 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 20:16:33,866 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 20:16:33,949 - KDynamics - INFO - Showing splash screen.
+2026-08-08 20:16:38,077 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 20:16:51,229 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 20:22:22,309 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 20:22:22,438 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 20:22:22,588 - KDynamics - INFO - Showing splash screen.
+2026-08-08 20:22:27,574 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 20:22:36,504 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 20:25:10,540 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 20:26:34,685 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 20:26:34,810 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 20:26:34,972 - KDynamics - INFO - Showing splash screen.
+2026-08-08 20:26:39,732 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 20:26:49,533 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
+2026-08-08 20:31:27,164 - KDynamics - INFO - Connecting to database at sqlite:///D:\Account_System\K_Dynamics_System.db
+2026-08-08 20:31:27,375 - KDynamics - INFO - Starting RN Scanner Business Management System
+2026-08-08 20:31:27,546 - KDynamics - INFO - Showing splash screen.
+2026-08-08 20:31:32,324 - KDynamics - INFO - Users exist — showing login window.
+2026-08-08 20:31:43,091 - KDynamics - INFO - User 'Shahbaz Nawaz' logged in.
