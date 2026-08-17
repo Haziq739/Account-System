@@ -1,4 +1,6 @@
 from PySide6.QtWidgets import (
+    QGridLayout,
+    QSizePolicy,
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
     QLineEdit, QPushButton, QTableWidget, QTableWidgetItem,
     QHeaderView, QFileDialog, QMessageBox, QDialog, QAbstractItemView
@@ -21,7 +23,7 @@ class LoadingDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setFixedSize(300, 100)
-        self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | Qt.WindowType.WindowTitleHint)
+        self.setWindowFlags(Qt.WindowType.Dialog)
         self.setStyleSheet(f"QDialog {{ background-color: {COLORS['bg_card']}; border-radius: 8px; }}")
         
         layout = QVBoxLayout(self)
@@ -30,20 +32,64 @@ class LoadingDialog(QDialog):
         lbl.setStyleSheet(f"color: {COLORS['text_primary']}; font-size: 16px; font-weight: 600;")
         layout.addWidget(lbl)
 
+class RowActionDialog(QDialog):
+    def __init__(self, parent, title: str):
+        super().__init__(parent)
+        self.setWindowTitle("Action")
+        self.setFixedSize(320, 160)
+        self.setWindowFlags(Qt.WindowType.Dialog)
+        self.setStyleSheet(f"QDialog {{ background-color: {COLORS['bg_card']}; border-radius: 8px; border: 1px solid {COLORS['border_card']}; }}")
+        
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 24, 24, 24)
+        
+        lbl = QLabel(title)
+        lbl.setStyleSheet(f"color: {COLORS['text_primary']}; font-size: 16px; font-weight: 600;")
+        lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(lbl)
+        
+        layout.addSpacing(20)
+        
+        btn_layout = QGridLayout()
+        btn_layout.setColumnStretch(0, 1)
+        btn_layout.setColumnStretch(1, 1)
+        btn_layout.setColumnStretch(2, 1)
+        
+        self.edit_btn = _btn("Edit", primary=True)
+        self.del_btn = QPushButton("Delete")
+        self.del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.del_btn.setStyleSheet(f"background-color: #FEE2E2; color: #EF4444; border: 1px solid #FCA5A5; padding: 8px 16px; border-radius: 6px; font-weight: 600;")
+        self.cancel_btn = _btn("Cancel")
+        
+        self.edit_btn.setFixedSize(84, 38)
+        self.del_btn.setFixedSize(84, 38)
+        self.cancel_btn.setFixedSize(84, 38)
+        
+        btn_layout.addWidget(self.edit_btn, 0, 0)
+        btn_layout.addWidget(self.del_btn, 0, 1)
+        btn_layout.addWidget(self.cancel_btn, 0, 2)
+        
+        layout.addLayout(btn_layout)
+        
+        self.cancel_btn.clicked.connect(self.reject)
+        self.edit_btn.clicked.connect(lambda: self.done(1))
+        self.del_btn.clicked.connect(lambda: self.done(2))
+
 class CSVImportWorker(QThread):
     """Background worker thread to run CSV import without freezing the UI."""
     finished_import = Signal(int, int, int)
     error_import = Signal(str)
 
-    def __init__(self, file_path: str, user_id: int, context: str = "regular"):
+    def __init__(self, file_path: str, user_id: int, company_id: int, context: str = "regular"):
         super().__init__()
         self.file_path = file_path
         self.user_id = user_id
+        self.company_id = company_id
         self.context = context
 
     def run(self):
         try:
-            imported, skipped, failed = CustomerService.import_customers_from_csv(self.file_path, self.user_id, customer_type=self.context)
+            imported, skipped, failed = CustomerService.import_customers_from_csv(self.company_id, self.file_path, self.user_id, customer_type=self.context)
             self.finished_import.emit(imported, skipped, failed)
         except Exception as e:
             self.error_import.emit(str(e))
@@ -54,15 +100,19 @@ class CustomersPage(QWidget):
         super().__init__(parent)
         self.current_user = current_user
         self.context = context
+        self.active_company_id = None
         self.customers = []
         self._build()
-        self.refresh_data()
         
         # Debounce timer for search
         self.search_timer = QTimer()
         self.search_timer.setSingleShot(True)
         self.search_timer.timeout.connect(self.refresh_data)
-
+        
+    def set_company(self, company_id: int):
+        self.active_company_id = company_id
+        self.refresh_data()
+        
     def _build(self):
         root = QVBoxLayout(self)
         root.setContentsMargins(32, 32, 32, 32)
@@ -107,8 +157,8 @@ class CustomersPage(QWidget):
         
         # ── Table ────────────────────────────────────────────────
         self.table = QTableWidget()
-        self.table.setColumnCount(6)
-        self.table.setHorizontalHeaderLabels(["S.No", "Name", "Phone", "Address", "Date Added", "Actions"])
+        self.table.setColumnCount(5)
+        self.table.setHorizontalHeaderLabels(["S.No", "Name", "Phone", "Address", "Date Added"])
         
         self.table.setStyleSheet(f"""
             QTableWidget {{
@@ -143,6 +193,7 @@ class CustomersPage(QWidget):
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setShowGrid(False)
         self.table.verticalHeader().setVisible(False)
+        self.table.cellClicked.connect(self._on_row_clicked)
         
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
@@ -150,8 +201,6 @@ class CustomersPage(QWidget):
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(5, QHeaderView.ResizeMode.Fixed)
-        self.table.setColumnWidth(5, 140)
         
         root.addWidget(self.table)
 
@@ -159,8 +208,11 @@ class CustomersPage(QWidget):
         self.search_timer.start(300) # 300ms debounce
 
     def refresh_data(self):
+        if not self.active_company_id:
+            return
+            
         term = self.search_input.text().strip()
-        self.customers = CustomerService.get_customers(term, customer_type=self.context)
+        self.customers = CustomerService.get_customers(self.active_company_id, term, customer_type=self.context)
         
         self.table.setUpdatesEnabled(False)
         self.table.setRowCount(0)
@@ -177,27 +229,18 @@ class CustomersPage(QWidget):
             if item:
                 item.setText(str(row + 1))
 
-    def _create_action_widget(self, cid: int) -> QWidget:
-        action_widget = QWidget()
-        action_layout = QHBoxLayout(action_widget)
-        action_layout.setContentsMargins(4, 2, 4, 2)
-        action_layout.setSpacing(8)
+    def _on_row_clicked(self, row, col):
+        item = self.table.item(row, 0)
+        if not item: return
+        customer_id = item.data(Qt.ItemDataRole.UserRole)
+        customer_name = self.table.item(row, 1).text()
         
-        edit_btn = QPushButton("✏️")
-        edit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        edit_btn.setStyleSheet("border: none; background: transparent; font-size: 14px;")
-        edit_btn.setToolTip("Edit Customer")
-        edit_btn.clicked.connect(lambda checked, c_id=cid: self._on_edit(c_id))
-        
-        del_btn = QPushButton("🗑️")
-        del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        del_btn.setStyleSheet("border: none; background: transparent; font-size: 14px;")
-        del_btn.setToolTip("Delete Customer")
-        del_btn.clicked.connect(lambda checked, c_id=cid: self._on_delete(c_id))
-        
-        action_layout.addWidget(edit_btn)
-        action_layout.addWidget(del_btn)
-        return action_widget
+        dlg = RowActionDialog(self, f"Customer: {customer_name}")
+        result = dlg.exec()
+        if result == 1:
+            self._on_edit(customer_id)
+        elif result == 2:
+            self._on_delete(customer_id)
 
     def _populate_row(self, row_idx: int, c: dict):
         # S.No (Display Row Index + 1)
@@ -219,10 +262,6 @@ class CustomersPage(QWidget):
         # Date
         dt_str = c["created_at"].strftime("%Y-%m-%d") if c["created_at"] else ""
         self.table.setItem(row_idx, 4, QTableWidgetItem(dt_str))
-        
-        # Actions
-        action_widget = self._create_action_widget(c["id"])
-        self.table.setCellWidget(row_idx, 5, action_widget)
 
     def _find_row_by_id(self, customer_id: int) -> int:
         for row in range(self.table.rowCount()):
@@ -235,12 +274,19 @@ class CustomersPage(QWidget):
         dlg = CustomerFormDialog(self)
         if dlg.exec():
             data = dlg.get_data()
-            if not data["name"] or not data["phone"]:
-                show_message(self, "error", "Validation Error", "Customer Name and Phone Number are required.")
+            if not data["name"]:
+                show_message(self, "error", "Validation Error", "Customer Name is required.")
                 return
             
             try:
-                new_c = CustomerService.create_customer(data["name"], data["phone"], data["address"], self.current_user["id"], customer_type=self.context)
+                new_cust = CustomerService.create_customer(
+                    company_id=self.active_company_id, 
+                    name=data["name"], 
+                    phone=data["phone"], 
+                    address=data["address"], 
+                    user_id=self.current_user["id"],
+                    customer_type=self.context
+                )
                 show_message(self, "success", "Success", "Customer created successfully.")
                 
                 # Instantly append to the bottom of the table
@@ -248,12 +294,15 @@ class CustomersPage(QWidget):
                 self.table.insertRow(row_idx)
                 # Ensure the created_at key exists for populate_row
                 from datetime import datetime
-                new_c["created_at"] = datetime.now() 
-                self.customers.append(new_c)
-                self._populate_row(row_idx, new_c)
+                new_cust["created_at"] = datetime.now() 
+                self.customers.append(new_cust)
+                self._populate_row(row_idx, new_cust)
+                return True
                 
-            except ValueError as e:
-                show_message(self, "error", "Error", str(e))
+            except Exception as e:
+                from ui.auth.setup_window import handle_duplicate_error
+                if not handle_duplicate_error(self, e):
+                    show_message(self, "error", "Error", str(e))
 
     def _on_edit(self, customer_id: int):
         cust = next((c for c in self.customers if c["id"] == customer_id), None)
@@ -263,8 +312,8 @@ class CustomersPage(QWidget):
         dlg = CustomerFormDialog(self, customer_data=cust)
         if dlg.exec():
             data = dlg.get_data()
-            if not data["name"] or not data["phone"]:
-                show_message(self, "error", "Validation Error", "Customer Name and Phone Number are required.")
+            if not data["name"]:
+                show_message(self, "error", "Validation Error", "Customer Name is required.")
                 return
             
             try:
@@ -281,7 +330,9 @@ class CustomersPage(QWidget):
                 else:
                     show_message(self, "error", "Error", "Failed to update customer.")
             except ValueError as e:
-                show_message(self, "error", "Error", str(e))
+                from ui.auth.setup_window import handle_duplicate_error
+                if not handle_duplicate_error(self, e):
+                    show_message(self, "error", "Error", str(e))
 
     def _on_delete(self, customer_id: int):
         reply = QMessageBox.question(
@@ -311,7 +362,7 @@ class CustomersPage(QWidget):
             
         # Launch background worker
         self.loading_dlg = LoadingDialog(self, "Importing Customers...")
-        self.worker = CSVImportWorker(file_path, self.current_user["id"], context=self.context)
+        self.worker = CSVImportWorker(file_path, self.current_user["id"], self.active_company_id, context=self.context)
         
         self.worker.finished_import.connect(self._on_import_success)
         self.worker.error_import.connect(self._on_import_error)

@@ -8,6 +8,7 @@ class LedgerService:
         with SessionLocal() as s:
             from models.invoice import Invoice
             from models.payment import Payment
+            from models.expense import Expense
             from sqlalchemy import func
             
             opening_balance = 0.0
@@ -26,7 +27,15 @@ class LedgerService:
                     Payment.payment_date < start_date
                 ).scalar() or 0.0
                 
-                opening_balance = float(inv_sum) - float(pay_sum)
+                # Customer-linked expenses that happened before start_date also reduce credit
+                exp_sum = s.query(func.sum(Expense.amount)).filter(
+                    Expense.company_id == company_id,
+                    Expense.customer_id == customer_id,
+                    Expense.is_deleted == False,
+                    Expense.expense_date < start_date
+                ).scalar() or 0.0
+                
+                opening_balance = float(inv_sum) - float(pay_sum) + float(exp_sum)
                 
             inv_query = s.query(Invoice).filter(
                 Invoice.company_id == company_id,
@@ -38,16 +47,24 @@ class LedgerService:
                 Payment.customer_id == customer_id,
                 Payment.is_deleted == False
             )
+            exp_query = s.query(Expense).filter(
+                Expense.company_id == company_id,
+                Expense.customer_id == customer_id,
+                Expense.is_deleted == False
+            )
             
             if start_date:
                 inv_query = inv_query.filter(Invoice.issue_date >= start_date)
                 pay_query = pay_query.filter(Payment.payment_date >= start_date)
+                exp_query = exp_query.filter(Expense.expense_date >= start_date)
             if end_date:
                 inv_query = inv_query.filter(Invoice.issue_date <= end_date)
                 pay_query = pay_query.filter(Payment.payment_date <= end_date)
+                exp_query = exp_query.filter(Expense.expense_date <= end_date)
                 
             invoices = inv_query.all()
             payments = pay_query.all()
+            expenses = exp_query.all()
             
             transactions = []
             
@@ -82,6 +99,22 @@ class LedgerService:
                     "credit": float(pay.amount),
                     "sort_key": (pay.payment_date, sort_priority, pay.id),
                     "row_balance": float(pay.amount)
+                })
+            
+            # Customer-linked Day Book expenses reduce the amount owed to customer
+            for exp in expenses:
+                exp_desc = f"Refund/Settlement via Expense: {exp.title}"
+                if exp.notes:
+                    exp_desc += f" - {exp.notes}"
+                transactions.append({
+                    "date": exp.expense_date,
+                    "type": "Expense Settlement",
+                    "ref": f"EXP-{exp.id}",
+                    "desc": exp_desc,
+                    "debit": float(exp.amount),  # Debit reduces credit (advance) balance
+                    "credit": 0.0,
+                    "sort_key": (exp.expense_date, 4, exp.id),
+                    "row_balance": float(exp.amount)
                 })
                 
             transactions.sort(key=lambda x: x["sort_key"])

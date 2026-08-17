@@ -1,7 +1,8 @@
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
     QLineEdit, QPushButton, QComboBox, QDateEdit, QFileDialog,
-    QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView, QMessageBox
+    QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView, QMessageBox,
+    QGridLayout
 )
 from PySide6.QtCore import Qt, QDate
 from ui.design_system import COLORS
@@ -21,12 +22,12 @@ class AddPaymentDialog(QDialog):
         super().__init__(parent)
         self.company_id = company_id
         self.current_user = current_user
-        
-        self.customers = CustomerService.get_customers()
+
+        self.customers = CustomerService.get_customers(company_id=self.company_id)
         self.invoices = InvoiceService.get_invoices(company_id)
-        
-        self.setWindowTitle("Receive Payment")
-        self.setMinimumWidth(400)
+
+        self.setWindowTitle("Add Payment")
+        self.setMinimumWidth(500)
         self.setStyleSheet(f"""
             QDialog {{ background-color: {COLORS['bg_app']}; }}
             QLabel {{ color: {COLORS['text_primary']}; font-weight: 500; font-size: 13px; }}
@@ -36,85 +37,252 @@ class AddPaymentDialog(QDialog):
                 border-radius: 6px; padding: 8px;
                 color: {COLORS['text_primary']};
             }}
+            QComboBox QAbstractItemView {{
+                background-color: {COLORS['bg_card']};
+                color: {COLORS['text_primary']};
+                selection-background-color: {COLORS['primary']};
+                selection-color: white;
+                border: 1px solid {COLORS['border']};
+                outline: 0px;
+                padding: 4px;
+            }}
+            QComboBox QAbstractItemView::item {{
+                min-height: 28px;
+                padding: 4px 8px;
+            }}
+            QRadioButton {{
+                color: {COLORS['text_primary']};
+                font-size: 13px;
+                font-weight: 600;
+                padding: 6px 12px;
+            }}
+            QFrame#type_frame {{
+                background-color: {COLORS['bg_input']};
+                border: 1px solid {COLORS['border']};
+                border-radius: 8px;
+            }}
         """)
         self._build()
 
+
+    def keyPressEvent(self, event):
+        from PySide6.QtCore import Qt
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            return
+        super().keyPressEvent(event)
+
     def _build(self):
-        layout = QVBoxLayout(self)
-        layout.setSpacing(15)
+        from PySide6.QtWidgets import QRadioButton, QButtonGroup, QFrame, QScrollArea, QWidget, QListView
         
+        main_layout = QVBoxLayout(self)
+        main_layout.setSpacing(0)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        # Avoid transparent backgrounds in scroll areas; they cause severe rendering lag on Windows
+        scroll.setStyleSheet(f"QScrollArea {{ background-color: {COLORS['bg_app']}; border: none; }}")
+        
+        container = QWidget()
+        container.setStyleSheet(f"QWidget {{ background-color: {COLORS['bg_app']}; }}")
+        
+        layout = QVBoxLayout(container)
+        layout.setSpacing(12)
+        layout.setContentsMargins(20, 20, 20, 10)
+
+        # Payment Type
+        type_lbl = QLabel("Payment Type *")
+        type_lbl.setStyleSheet(f"color: {COLORS['text_primary']}; font-size: 14px; font-weight: 700;")
+        layout.addWidget(type_lbl)
+
+        type_frame = QFrame()
+        type_frame.setObjectName("type_frame")
+        type_row = QHBoxLayout(type_frame)
+        type_row.setContentsMargins(12, 6, 12, 6)
+
+        self.manual_rb = QRadioButton("\U0001f4b5  Manual Payment")
+        self.invoice_rb = QRadioButton("\U0001f9fe  Payment Against Invoice")
+        self.manual_rb.setChecked(True)
+
+        self.btn_group = QButtonGroup(self)
+        self.btn_group.addButton(self.manual_rb, 1)
+        self.btn_group.addButton(self.invoice_rb, 2)
+        self.manual_rb.toggled.connect(self._on_type_toggled)
+
+        type_row.addWidget(self.manual_rb)
+        type_row.addSpacing(20)
+        type_row.addWidget(self.invoice_rb)
+        type_row.addStretch()
+        layout.addWidget(type_frame)
+
+        # Customer
         layout.addWidget(QLabel("Customer *"))
         self.customer_cb = QComboBox()
+        self.customer_cb.setView(QListView())  # Fixes Windows native black dropdown popup bug
         self.customer_cb.addItem("-- Select Customer --", None)
         for c in self.customers:
             self.customer_cb.addItem(c['name'], c['id'])
         self.customer_cb.currentIndexChanged.connect(self._on_customer_changed)
         layout.addWidget(self.customer_cb)
-        
-        layout.addWidget(QLabel("Apply to Invoice (Optional - Advance if empty)"))
+
+        # Invoice section (shown only when Payment Against Invoice is selected)
+        self.inv_label = QLabel("Select Invoice *")
         self.invoice_cb = QComboBox()
-        self.invoice_cb.addItem("-- Advance Payment --", None)
+        self.invoice_cb.setView(QListView())  # Fixes Windows native black dropdown popup bug
+        self.invoice_cb.addItem("-- Select an Invoice --", None)
+        self.invoice_cb.currentIndexChanged.connect(self._on_invoice_changed)
+
+        self.inv_summary_lbl = QLabel("")
+        self.inv_summary_lbl.setStyleSheet(
+            f"color: {COLORS['primary']}; font-size: 12px; font-weight: 600; padding: 4px 0;"
+        )
+        self.inv_summary_lbl.setWordWrap(True)
+        self.inv_summary_lbl.hide()
+
+        layout.addWidget(self.inv_label)
         layout.addWidget(self.invoice_cb)
-        
+        layout.addWidget(self.inv_summary_lbl)
+
+        # Invoice section hidden by default (manual payment mode)
+        self.inv_label.hide()
+        self.invoice_cb.hide()
+
+        # Amount
         layout.addWidget(QLabel("Amount *"))
         self.amount_input = QLineEdit()
+        self.amount_input.setPlaceholderText("Enter amount")
         layout.addWidget(self.amount_input)
-        
+
+        # Payment Method
         layout.addWidget(QLabel("Payment Method *"))
         self.method_cb = QComboBox()
+        self.method_cb.setView(QListView())  # Fixes Windows native black dropdown popup bug
         self.method_cb.addItems(["Cash", "Bank Transfer", "Cheque", "Credit"])
         layout.addWidget(self.method_cb)
-        
+
+        # Payment Date
         layout.addWidget(QLabel("Payment Date"))
         self.date_input = QDateEdit()
         self.date_input.setDate(QDate.currentDate())
         self.date_input.setCalendarPopup(True)
         layout.addWidget(self.date_input)
-        
-        layout.addWidget(QLabel("Reference / Cheque Number"))
+
+        # Reference
+        layout.addWidget(QLabel("Reference / Cheque Number (Optional)"))
         self.ref_input = QLineEdit()
+        self.ref_input.setPlaceholderText("e.g. Cheque No. 12345")
         layout.addWidget(self.ref_input)
-        
-        layout.addWidget(QLabel("Notes"))
+
+        # Notes
+        layout.addWidget(QLabel("Notes (Optional)"))
         self.notes_input = QLineEdit()
         layout.addWidget(self.notes_input)
         
+        scroll.setWidget(container)
+        main_layout.addWidget(scroll)
+
+        # Buttons
         btn_layout = QHBoxLayout()
+        btn_layout.setContentsMargins(20, 10, 20, 20)
+        btn_layout.setSpacing(15)
+        
         cancel_btn = _btn("Cancel")
+        cancel_btn.setMinimumWidth(140)
         cancel_btn.clicked.connect(self.reject)
+        
         save_btn = _btn("Save Payment", primary=True)
+        save_btn.setMinimumWidth(140)
         save_btn.clicked.connect(self._save)
+        save_btn.setAutoDefault(False)
+        save_btn.setDefault(False)
         
         btn_layout.addStretch()
         btn_layout.addWidget(cancel_btn)
         btn_layout.addWidget(save_btn)
-        layout.addLayout(btn_layout)
+        main_layout.addLayout(btn_layout)
+
+    def _on_type_toggled(self, manual_checked: bool):
+        """Show/hide invoice section based on payment type selection."""
+        self.inv_label.setVisible(not manual_checked)
+        self.invoice_cb.setVisible(not manual_checked)
+        self.inv_summary_lbl.setVisible(False)
+        if manual_checked:
+            self.amount_input.clear()
 
     def _on_customer_changed(self):
         cust_id = self.customer_cb.currentData()
         self.invoice_cb.clear()
-        self.invoice_cb.addItem("-- Advance Payment --", None)
+        self.invoice_cb.addItem("-- Select an Invoice --", None)
+        self.inv_summary_lbl.hide()
         if not cust_id:
             return
-            
         for inv in self.invoices:
             if inv.get("customer_id") == cust_id and inv.get("status") != "paid":
-                self.invoice_cb.addItem(f"{inv['invoice_number']} - Total: {inv['net_amount']}", inv["id"])
+                remaining = inv['net_amount'] - inv['paid_amount']
+                self.invoice_cb.addItem(
+                    f"{inv['invoice_number']} — Total: {inv['net_amount']:.2f}  |  Remaining: {remaining:.2f}",
+                    inv["id"]
+                )
+
+    def _on_invoice_changed(self):
+        inv_id = self.invoice_cb.currentData()
+        if not inv_id:
+            self.inv_summary_lbl.hide()
+            self.amount_input.clear()
+            return
+        for inv in self.invoices:
+            if inv["id"] == inv_id:
+                remaining = inv['net_amount'] - inv['paid_amount']
+                self.inv_summary_lbl.setText(
+                    f"Invoice Total: {inv['net_amount']:.2f}   |   "
+                    f"Already Paid: {inv['paid_amount']:.2f}   |   "
+                    f"Remaining: {remaining:.2f}"
+                )
+                self.inv_summary_lbl.show()
+                self.amount_input.setText(f"{remaining:.2f}")
+                break
 
     def _save(self):
+        is_invoice_payment = self.invoice_rb.isChecked()
+
         cust_id = self.customer_cb.currentData()
         if not cust_id:
-            show_message(self, "error", "Error", "Customer is required.")
+            show_message(self, "error", "Validation Error", "Please select a Customer.")
             return
-            
+
+        inv_id = None
+        if is_invoice_payment:
+            inv_id = self.invoice_cb.currentData()
+            if not inv_id:
+                show_message(self, "error", "Validation Error", "Please select an Invoice.")
+                return
+
         try:
             amt = float(self.amount_input.text())
+            if amt <= 0:
+                raise ValueError
         except ValueError:
-            show_message(self, "error", "Error", "Invalid amount.")
+            show_message(self, "error", "Validation Error", "Please enter a valid amount greater than 0.")
             return
+
+        # Validate that payment amount does not exceed the remaining invoice amount
+        if is_invoice_payment and inv_id:
+            remaining = 0
+            for inv in self.invoices:
+                if inv["id"] == inv_id:
+                    remaining = inv['net_amount'] - inv['paid_amount']
+                    break
             
-        inv_id = self.invoice_cb.currentData()
-        
+            if amt > remaining:
+                show_message(
+                    self, 
+                    "error", 
+                    "Invalid Amount", 
+                    f"Payment amount ({amt:,.2f}) cannot be greater than the invoice outstanding amount ({remaining:,.2f})."
+                )
+                return
+
         try:
             pay_result = PaymentService.create_payment(
                 company_id=self.company_id,
@@ -125,13 +293,15 @@ class AddPaymentDialog(QDialog):
                 reference_number=self.ref_input.text(),
                 notes=self.notes_input.text(),
                 invoice_id=inv_id,
-                user_id=self.current_user["id"]
+                user_id=self.current_user["id"],
+                is_advance=(not is_invoice_payment)
             )
             dlg = PaymentSuccessDialog(self, pay_result["id"])
             dlg.exec()
             self.accept()
         except Exception as e:
             show_message(self, "error", "Error", f"Failed to save payment: {e}")
+
 
 class RecordInvoicePaymentDialog(QDialog):
     def __init__(self, parent, company_id: int, current_user: dict, invoice: dict):
@@ -154,6 +324,13 @@ class RecordInvoicePaymentDialog(QDialog):
             .summary_val {{ font-weight: bold; color: {COLORS['primary']}; font-size: 14px; }}
         """)
         self._build()
+
+
+    def keyPressEvent(self, event):
+        from PySide6.QtCore import Qt
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            return
+        super().keyPressEvent(event)
 
     def _build(self):
         layout = QVBoxLayout(self)
@@ -192,15 +369,22 @@ class RecordInvoicePaymentDialog(QDialog):
         self.notes_input = QLineEdit()
         layout.addWidget(self.notes_input)
         
-        btn_layout = QHBoxLayout()
+        btn_layout = QGridLayout()
+        btn_layout.setColumnStretch(0, 1)
+        btn_layout.setColumnStretch(1, 1)
+        
         cancel_btn = _btn("Cancel")
         cancel_btn.clicked.connect(self.reject)
         save_btn = _btn("Save Payment", primary=True)
         save_btn.clicked.connect(self._save)
+        save_btn.setAutoDefault(False)
+        save_btn.setDefault(False)
         
-        btn_layout.addStretch()
-        btn_layout.addWidget(cancel_btn)
-        btn_layout.addWidget(save_btn)
+        cancel_btn.setFixedSize(160, 38)
+        save_btn.setFixedSize(160, 38)
+        
+        btn_layout.addWidget(cancel_btn, 0, 0)
+        btn_layout.addWidget(save_btn, 0, 1)
         layout.addLayout(btn_layout)
 
     def _save(self):
@@ -264,6 +448,13 @@ class PaymentSuccessDialog(QDialog):
             QLabel {{ color: {COLORS['text_primary']}; font-size: 14px; margin-bottom: 10px; }}
         """)
         self._build()
+
+
+    def keyPressEvent(self, event):
+        from PySide6.QtCore import Qt
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            return
+        super().keyPressEvent(event)
 
     def _build(self):
         layout = QVBoxLayout(self)
@@ -384,6 +575,13 @@ class PaymentHistoryDialog(QDialog):
         """)
         self._build()
         self._load_data()
+
+
+    def keyPressEvent(self, event):
+        from PySide6.QtCore import Qt
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            return
+        super().keyPressEvent(event)
 
     def _build(self):
         layout = QVBoxLayout(self)

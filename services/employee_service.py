@@ -53,7 +53,20 @@ class EmployeeService:
     @staticmethod
     def create_employee(company_id: int, name: str, salary: float, phone: str = "", address: str = "", user_id: int = None) -> dict:
         """Creates a new employee."""
+        from sqlalchemy import func
         with SessionLocal() as s:
+            conditions = [func.lower(Employee.name) == name.lower()]
+            if phone:
+                conditions.append(Employee.phone == phone)
+                
+            existing = s.query(Employee).filter(
+                Employee.company_id == company_id,
+                Employee.is_deleted == False,
+                or_(*conditions)
+            ).first()
+            if existing:
+                raise ValueError("Duplicates found")
+                
             new_e = Employee(
                 company_id=company_id,
                 name=name,
@@ -78,10 +91,24 @@ class EmployeeService:
     @staticmethod
     def update_employee(company_id: int, employee_id: int, name: str, salary: float, phone: str = "", address: str = "", user_id: int = None) -> bool:
         """Updates an existing active employee within a specific company."""
+        from sqlalchemy import func
         with SessionLocal() as s:
             e = s.query(Employee).filter(Employee.id == employee_id, Employee.company_id == company_id, Employee.is_deleted == False).first()
             if not e:
                 return False
+                
+            conditions = [func.lower(Employee.name) == name.lower()]
+            if phone:
+                conditions.append(Employee.phone == phone)
+                
+            existing = s.query(Employee).filter(
+                Employee.id != employee_id,
+                Employee.company_id == company_id,
+                Employee.is_deleted == False,
+                or_(*conditions)
+            ).first()
+            if existing:
+                raise ValueError("Duplicates found")
                 
             e.name = name
             e.salary = salary

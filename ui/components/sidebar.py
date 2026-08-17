@@ -156,6 +156,10 @@ class Sidebar(QFrame):
         layout.addSpacing(12)
 
         # Standalone items
+        dash_btn = SidebarBtn("📊", "Dashboard", "dashboard")
+        dash_btn.clicked.connect(lambda checked, b=dash_btn: self._on_nav_click(b))
+        self._buttons.append(dash_btn)
+        layout.addWidget(dash_btn)
         
         serv_btn = SidebarBtn("🏷️", "Services", "services")
         serv_btn.clicked.connect(lambda checked, b=serv_btn: self._on_nav_click(b))

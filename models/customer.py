@@ -1,4 +1,4 @@
-from sqlalchemy import String, Text, Numeric
+from sqlalchemy import String, Text, Numeric, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from models.base import Base, TimestampMixin
 
@@ -6,6 +6,7 @@ class Customer(Base, TimestampMixin):
     __tablename__ = "customers"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    company_id: Mapped[int | None] = mapped_column(ForeignKey("companies.id"))
     name: Mapped[str] = mapped_column(String(255), index=True)
     phone: Mapped[str | None] = mapped_column(String(50))
     email: Mapped[str | None] = mapped_column(String(255))
@@ -15,6 +16,7 @@ class Customer(Base, TimestampMixin):
     is_deleted: Mapped[bool] = mapped_column(default=False)
     
     # Relationships
+    company = relationship("Company", back_populates="customers")
     invoices = relationship("Invoice", back_populates="customer", cascade="all, delete-orphan")
     quotations = relationship("Quotation", back_populates="customer", cascade="all, delete-orphan")
     payments = relationship("Payment", back_populates="customer", cascade="all, delete-orphan")

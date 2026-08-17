@@ -404,7 +404,9 @@ class BackupPage(QWidget):
             
             # Force UI to reload everything and purge old SQLAlchemy connections
             main_win = self.window()
-            if hasattr(main_win, 'refresh_theme'):
+            if hasattr(main_win, '_on_company_changed'):
+                main_win._on_company_changed(self._company_id())
+            elif hasattr(main_win, 'refresh_theme'):
                 main_win.refresh_theme()
         else:
             self.status_lbl.setStyleSheet(f"color: {COLORS.get('danger', '#EF4444')}; font-size: 13px; background: transparent;")

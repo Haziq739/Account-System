@@ -188,7 +188,7 @@ class LedgerPage(QWidget):
         self.customer_cb.clear()
         self.customer_cb.addItem("-- Select a Customer --", None)
         
-        customers = CustomerService.get_customers_with_ledger(self.company_id, customer_type=self.context)
+        customers = CustomerService.get_customers(self.company_id, customer_type=self.context)
         for c in customers:
             self.customer_cb.addItem(c['name'], c['id'])
             

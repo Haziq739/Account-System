@@ -1,4 +1,6 @@
 from PySide6.QtWidgets import (
+    QGridLayout,
+    QSizePolicy,
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
     QLineEdit, QPushButton, QTableWidget, QTableWidgetItem,
     QHeaderView, QMessageBox, QAbstractItemView
@@ -28,6 +30,84 @@ def _btn(text: str, primary: bool = False, icon: str = "") -> QPushButton:
     """)
     b.setCursor(Qt.CursorShape.PointingHandCursor)
     return b
+
+from PySide6.QtWidgets import QDialog
+
+class RowActionDialog(QDialog):
+    def __init__(self, parent=None, title_text="Action"):
+        super().__init__(parent)
+        self.setWindowTitle("Action")
+        self.setFixedWidth(320)
+        self.setStyleSheet(f"""
+            QDialog {{ 
+                background-color: {COLORS['bg_card']}; 
+            }}
+            QPushButton, QPushButton#outline_btn, QPushButton#primary_btn {{
+                text-align: center;
+                padding: 12px 16px;
+                border: 1px solid {COLORS['border']};
+                border-radius: 6px;
+                background-color: {COLORS['bg_card']};
+                color: {COLORS['text_primary']};
+                font-size: 14px;
+                font-weight: 500;
+                min-height: 20px;
+            }}
+            QPushButton:hover, QPushButton#outline_btn:hover, QPushButton#primary_btn:hover {{
+                background-color: #EFF6FF;
+                border: 1px solid {COLORS['primary']};
+                color: {COLORS['primary']};
+            }}
+        """)
+        self.setWindowFlags(Qt.WindowType.Dialog)
+        
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(12)
+        
+        title_lbl = QLabel(title_text)
+        title_lbl.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold; font-size: 16px;")
+        title_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(title_lbl)
+        
+        from PySide6.QtWidgets import QPushButton
+        self.btn_history = QPushButton("Employee Advance History")
+        self.btn_history.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_edit = QPushButton("Edit")
+        self.btn_edit.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_del = QPushButton("Delete")
+        self.btn_del.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_cancel = QPushButton("Cancel")
+        self.btn_cancel.setCursor(Qt.CursorShape.PointingHandCursor)
+        
+        self.btn_del.setStyleSheet("""
+            QPushButton, QPushButton#outline_btn {
+                background-color: #FEF2F2; 
+                color: #DC2626; 
+                border: 1px solid #FECACA; 
+                text-align: center;
+                padding: 12px 16px;
+                border-radius: 6px;
+                font-size: 14px;
+                font-weight: 500;
+                min-height: 20px;
+            }
+            QPushButton:hover, QPushButton#outline_btn:hover {
+                background-color: #FEE2E2;
+                border: 1px solid #EF4444;
+                color: #B91C1C;
+            }
+        """)
+        
+        self.btn_history.clicked.connect(lambda: self.done(1))
+        self.btn_edit.clicked.connect(lambda: self.done(2))
+        self.btn_del.clicked.connect(lambda: self.done(8))
+        self.btn_cancel.clicked.connect(lambda: self.reject())
+        
+        layout.addWidget(self.btn_history)
+        layout.addWidget(self.btn_edit)
+        layout.addWidget(self.btn_del)
+        layout.addWidget(self.btn_cancel)
 
 class EmployeesPage(QWidget):
     """Page for managing employee salaries."""
@@ -109,8 +189,8 @@ class EmployeesPage(QWidget):
         
         # ── Table ────────────────────────────────────────────────
         self.table = QTableWidget()
-        self.table.setColumnCount(7)
-        self.table.setHorizontalHeaderLabels(["Sr. No", "Employee Name", "Monthly Salary", "Current Advance", "Net Salary Payable", "Date Added", "Actions"])
+        self.table.setColumnCount(6)
+        self.table.setHorizontalHeaderLabels(["Sr. No", "Employee Name", "Monthly Salary", "Current Advance", "Net Salary Payable", "Date Added"])
         
         self.table.setStyleSheet(f"""
             QTableWidget {{
@@ -145,8 +225,8 @@ class EmployeesPage(QWidget):
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setShowGrid(False)
         self.table.verticalHeader().setVisible(False)
-        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.table.customContextMenuRequested.connect(self._on_context_menu)
+        
+        self.table.cellClicked.connect(self._on_row_clicked)
         
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
@@ -155,33 +235,11 @@ class EmployeesPage(QWidget):
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(6, QHeaderView.ResizeMode.Fixed)
-        self.table.setColumnWidth(6, 100)
+        
+        
         
         root.addWidget(self.table)
 
-    def _on_context_menu(self, pos):
-        from PySide6.QtWidgets import QMenu
-        item = self.table.itemAt(pos)
-        if not item:
-            return
-            
-        row = item.row()
-        emp_id_item = self.table.item(row, 0)
-        if not emp_id_item:
-            return
-            
-        employee_id = emp_id_item.data(Qt.ItemDataRole.UserRole)
-        emp_name = self.table.item(row, 1).text()
-        
-        menu = QMenu(self)
-        history_action = menu.addAction("Employee Advance History")
-        
-        action = menu.exec(self.table.viewport().mapToGlobal(pos))
-        if action == history_action:
-            from ui.components.employee_dialogs import EmployeeAdvanceHistoryDialog
-            dlg = EmployeeAdvanceHistoryDialog(self, employee_name=emp_name, employee_id=employee_id)
-            dlg.exec()
 
     def _on_download_pdf(self):
         if not self.current_company:
@@ -254,27 +312,24 @@ class EmployeesPage(QWidget):
             if item:
                 item.setText(str(row + 1))
 
-    def _create_action_widget(self, eid: int) -> QWidget:
-        action_widget = QWidget()
-        action_layout = QHBoxLayout(action_widget)
-        action_layout.setContentsMargins(4, 2, 4, 2)
-        action_layout.setSpacing(8)
+    
+    def _on_row_clicked(self, row, col):
+        id_item = self.table.item(row, 0)
+        if not id_item: return
+        emp_id = id_item.data(Qt.ItemDataRole.UserRole)
+        emp_name = self.table.item(row, 1).text()
         
-        edit_btn = QPushButton("✏️")
-        edit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        edit_btn.setStyleSheet("border: none; background: transparent; font-size: 14px;")
-        edit_btn.setToolTip("Edit Employee")
-        edit_btn.clicked.connect(lambda checked, e_id=eid: self._on_edit(e_id))
+        dlg = RowActionDialog(self, f"Employee: {emp_name}")
+        res = dlg.exec()
         
-        del_btn = QPushButton("🗑️")
-        del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        del_btn.setStyleSheet("border: none; background: transparent; font-size: 14px;")
-        del_btn.setToolTip("Delete Employee")
-        del_btn.clicked.connect(lambda checked, e_id=eid: self._on_delete(e_id))
-        
-        action_layout.addWidget(edit_btn)
-        action_layout.addWidget(del_btn)
-        return action_widget
+        if res == 1:
+            from ui.components.employee_dialogs import EmployeeAdvanceHistoryDialog
+            hist_dlg = EmployeeAdvanceHistoryDialog(self, employee_name=emp_name, employee_id=emp_id)
+            hist_dlg.exec()
+        elif res == 2:
+            self._on_edit(emp_id)
+        elif res == 8:
+            self._on_delete(emp_id)
 
     def _populate_row(self, row_idx: int, e: dict):
         # S.No (Display Row Index + 1)
@@ -301,8 +356,7 @@ class EmployeesPage(QWidget):
         self.table.setItem(row_idx, 5, QTableWidgetItem(dt_str))
         
         # Actions
-        action_widget = self._create_action_widget(e["id"])
-        self.table.setCellWidget(row_idx, 6, action_widget)
+
 
     def _find_row_by_id(self, employee_id: int) -> int:
         for row in range(self.table.rowCount()):
@@ -336,16 +390,13 @@ class EmployeesPage(QWidget):
                     user_id=self.current_user["id"]
                 )
                 show_message(self, "success", "Success", "Employee created successfully.")
+                self.refresh_data()
+                return True
                 
-                # Instantly append to the bottom of the table
-                row_idx = self.table.rowCount()
-                self.table.insertRow(row_idx)
-                # Ensure the created_at key exists for populate_row
-                from datetime import datetime
-                new_e["created_at"] = datetime.now() 
-                self.employees.append(new_e)
-                self._populate_row(row_idx, new_e)
-                
+            except ValueError as e:
+                from ui.auth.setup_window import handle_duplicate_error
+                if not handle_duplicate_error(self, e):
+                    show_message(self, "error", "Error", str(e))
             except Exception as e:
                 show_message(self, "error", "Error", str(e))
 
@@ -376,16 +427,13 @@ class EmployeesPage(QWidget):
                 )
                 if success:
                     show_message(self, "success", "Success", "Employee updated successfully.")
-                    # Instantly update local row
-                    row_idx = self._find_row_by_id(employee_id)
-                    if row_idx != -1:
-                        emp["name"] = data["name"]
-                        emp["salary"] = data["salary"]
-                        emp["phone"] = data["phone"]
-                        emp["address"] = data["address"]
-                        self._populate_row(row_idx, emp)
+                    self.refresh_data()
                 else:
                     show_message(self, "error", "Error", "Failed to update employee.")
+            except ValueError as e:
+                from ui.auth.setup_window import handle_duplicate_error
+                if not handle_duplicate_error(self, e):
+                    show_message(self, "error", "Error", str(e))
             except Exception as e:
                 show_message(self, "error", "Error", str(e))
 

@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
-    QLineEdit, QPushButton, QTextEdit, QDoubleSpinBox
+    QLineEdit, QPushButton, QComboBox, QDateEdit, QDoubleSpinBox, QTextEdit,
+    QGridLayout
 )
 from PySide6.QtCore import Qt
 from ui.design_system import COLORS
@@ -92,15 +93,21 @@ class EmployeeFormDialog(QDialog):
         
         layout.addStretch()
         
-        btn_layout = QHBoxLayout()
+        btn_layout = QGridLayout()
+        btn_layout.setColumnStretch(0, 1)
+        btn_layout.setColumnStretch(1, 1)
+        
         cancel_btn = _btn("Cancel")
         cancel_btn.clicked.connect(self.reject)
         
         save_btn = _btn("Save Employee", primary=True)
         save_btn.clicked.connect(self.accept)
         
-        btn_layout.addWidget(cancel_btn)
-        btn_layout.addWidget(save_btn)
+        cancel_btn.setFixedSize(160, 38)
+        save_btn.setFixedSize(160, 38)
+        
+        btn_layout.addWidget(cancel_btn, 0, 0)
+        btn_layout.addWidget(save_btn, 0, 1)
         
         layout.addLayout(btn_layout)
 

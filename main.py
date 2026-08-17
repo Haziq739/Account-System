@@ -91,6 +91,12 @@ def migrate_quotation_pdfs():
 def main():
     logger.info("Starting RN Scanner Business Management System")
     
+    # Ensure database schema exists
+    from database.connection import engine
+    from models import Base
+    Base.metadata.create_all(engine)
+    logger.info("Database schema verified.")
+    
     # Seed required company data
     AuthService.seed_companies()
     
@@ -99,6 +105,30 @@ def main():
     
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
+    
+    # Fix QComboBox dropdown popup colors globally.
+    # Without this, the Fusion style renders dropdown popups with its own
+    # default colors (near-black) regardless of per-dialog stylesheets.
+    from ui.design_system import COLORS, init_theme
+    init_theme()
+    app.setStyleSheet(f"""
+        QComboBox QAbstractItemView {{
+            background-color: {COLORS['bg_card']};
+            color: {COLORS['text_primary']};
+            selection-background-color: {COLORS['primary']};
+            selection-color: {COLORS['text_on_primary']};
+            border: 1px solid {COLORS['border']};
+            outline: none;
+        }}
+        QComboBox QAbstractItemView::item {{
+            min-height: 28px;
+            padding: 4px 8px;
+        }}
+        QComboBox QAbstractItemView::item:hover {{
+            background-color: {COLORS['bg_input']};
+            color: {COLORS['text_primary']};
+        }}
+    """)
 
     manager = ApplicationManager()
     manager.start()

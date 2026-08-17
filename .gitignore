@@ -1,0 +1,49 @@
+# Environments
+.env
+.venv
+venv/
+env/
+ENV/
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+
+# Database (protect private data)
+*.db
+*.sqlite
+*.sqlite3
+K_Dynamics_System.db
+
+# Generated Documents and PDFs (Heavy files)
+*.pdf
+/invoices/
+/quotations/
+/statements/
+/receipts/
+/Day_Book/
+/Vendor_Bills/
+/Employee_Salaries/
+/K_Dynamics_Backups/
+
+# Build and Packaging Folders (Heavy files)
+/build/
+/dist/
+/Output/
+*.exe
+
+# Logs and User Runtime Configs
+*.log
+app.log
+error.log
+theme.json
+
+# IDEs
+.vscode/
+.idea/
+.gemini/
+
+# CSV Exports/Imports (protect client data)
+*.csv

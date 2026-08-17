@@ -57,9 +57,7 @@ class MainWindow(QMainWindow):
         self._build_ui()
         
         if active_company_id:
-            idx = self.header.company_combo.findData(active_company_id)
-            if idx >= 0:
-                self.header.company_combo.setCurrentIndex(idx)
+            self.header.set_active_company(active_company_id)
         if page_name:
             self._navigate_to(page_name)
 
@@ -145,6 +143,11 @@ class MainWindow(QMainWindow):
         # Determine initial company ID from header
         if self.header.companies:
             self.active_company_id = self.header.companies[0]["id"]
+            
+        from ui.pages.dashboard_page import DashboardPage
+        self.dashboard_page = DashboardPage(self.active_company_id)
+        self.dashboard_page.action_requested.connect(self._handle_quick_action)
+        self._add_page("dashboard", self.dashboard_page)
         
         from ui.pages.customers_page import CustomersPage
         self.customers_page = CustomersPage(self.current_user, context="regular")
@@ -216,17 +219,21 @@ class MainWindow(QMainWindow):
             self.pages.setCurrentIndex(self.page_map[page_name])
             if hasattr(self, 'sidebar'):
                 self.sidebar.set_active(page_name)
-            if page_name == "ledger" and hasattr(self, 'ledger_page'):
-                self.ledger_page.refresh_data()
-            if page_name == "db_ledger" and hasattr(self, 'db_ledger_page'):
-                self.db_ledger_page.refresh_data()
-            if page_name == "employees" and hasattr(self, 'employees_page'):
-                self.employees_page.refresh_data()
+                
+            page_attr = f"{page_name}_page"
+            if hasattr(self, page_attr):
+                page_instance = getattr(self, page_attr)
+                if hasattr(page_instance, 'refresh_data'):
+                    page_instance.refresh_data()
+
 
     def _on_company_changed(self, company_id: int):
         self.active_company_id = company_id
         # Notify pages that care about the active company
         
+        if hasattr(self, 'dashboard_page'):
+            self.dashboard_page.set_company(company_id)
+            
         if hasattr(self, 'invoices_page'):
             self.invoices_page.set_company(company_id)
         if hasattr(self, 'quotations_page'):
@@ -236,6 +243,12 @@ class MainWindow(QMainWindow):
             
         if hasattr(self, 'day_book_page'):
             self.day_book_page.set_company(company_id)
+            
+        if hasattr(self, 'customers_page'):
+            self.customers_page.set_company(company_id)
+            
+        if hasattr(self, 'services_page'):
+            self.services_page.set_company(company_id)
             
         if hasattr(self, 'vendors_page'):
             self.vendors_page.current_company = {"id": company_id}
@@ -257,3 +270,75 @@ class MainWindow(QMainWindow):
                         company_dict = c
                         break
             self.backup_page.set_company(company_dict)
+
+    def _handle_quick_action(self, action: str):
+        """Handle Quick Actions triggered from the Dashboard."""
+        from PySide6.QtWidgets import QDialog
+        
+        if not self.active_company_id:
+            return
+            
+        if action == "create_invoice":
+            from ui.components.create_invoice_dialog import CreateInvoiceDialog
+            dlg = CreateInvoiceDialog(self, self.active_company_id, self.current_user)
+            if dlg.exec() == QDialog.DialogCode.Accepted:
+                if hasattr(self, 'invoices_page'):
+                    self.invoices_page.refresh_data()
+                self._navigate_to("invoices")
+                
+        elif action == "add_customer":
+            if hasattr(self, 'customers_page'):
+                if self.customers_page._on_add():
+                    self._navigate_to("customers")
+                    
+        elif action == "add_vendor":
+            if hasattr(self, 'vendors_page'):
+                if self.vendors_page._on_add():
+                    self._navigate_to("vendors")
+                    
+        elif action == "add_service":
+            if hasattr(self, 'services_page'):
+                if self.services_page._on_add():
+                    self._navigate_to("services")
+                
+        elif action == "create_quotation":
+            from ui.components.create_quotation_dialog import CreateQuotationDialog
+            dlg = CreateQuotationDialog(self, self.active_company_id, self.current_user)
+            if dlg.exec() == QDialog.DialogCode.Accepted:
+                if hasattr(self, 'quotations_page'):
+                    self.quotations_page.refresh_data()
+                self._navigate_to("quotations")
+                
+        elif action == "open_day_book":
+            self._navigate_to("day_book")
+                
+        elif action == "add_expense":
+            from ui.components.add_expense_dialog import AddExpenseDialog
+            dlg = AddExpenseDialog(self, self.active_company_id, self.current_user)
+            if dlg.exec() == QDialog.DialogCode.Accepted:
+                if hasattr(self, 'day_book_page'):
+                    self.day_book_page.refresh_data()
+                self._navigate_to("day_book")
+                
+        elif action == "create_vendor_bill":
+            if hasattr(self, 'vendor_bills_page'):
+                if self.vendor_bills_page._on_add():
+                    self._navigate_to("vendor_bills")
+                
+        elif action == "add_employee":
+            if hasattr(self, 'employees_page'):
+                if self.employees_page._on_add():
+                    self._navigate_to("employees")
+                
+        elif action == "add_payment":
+            from ui.components.payment_dialogs import AddPaymentDialog
+            dlg = AddPaymentDialog(self, self.active_company_id, self.current_user)
+            if dlg.exec() == QDialog.DialogCode.Accepted:
+                if hasattr(self, 'day_book_page'):
+                    self.day_book_page.refresh_data()
+                if hasattr(self, 'invoices_page'):
+                    self.invoices_page.refresh_data()
+                self._navigate_to("day_book")
+                
+        elif action == "create_backup":
+            self._navigate_to("backup")

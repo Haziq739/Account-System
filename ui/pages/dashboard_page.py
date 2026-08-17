@@ -1,8 +1,8 @@
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, 
-    QLabel, QFrame, QGridLayout, QSizePolicy
+    QLabel, QFrame, QGridLayout, QSizePolicy, QPushButton
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from ui.design_system import COLORS
 
 
@@ -49,6 +49,7 @@ class DashboardCard(QFrame):
 
 class DashboardPage(QWidget):
     """Main dashboard content view."""
+    action_requested = Signal(str)
     
     def __init__(self, company_id: int):
         super().__init__()
@@ -65,47 +66,62 @@ class DashboardPage(QWidget):
         title.setStyleSheet(f"color: {COLORS['text_primary']}; font-size: 24px; font-weight: 700;")
         root.addWidget(title)
         
-        # Grid for cards
-        grid = QGridLayout()
-        grid.setSpacing(20)
+        # Summary cards have been removed as per requirement
         
-        # Currently using placeholders; will connect to DB in future phases
-        c1 = DashboardCard("Total Sales", "Rs. 0", "💰", COLORS['primary'])
-        c2 = DashboardCard("Today's Sales", "Rs. 0", "📈", COLORS['success'])
-        c3 = DashboardCard("Total Customers", "0", "👥", "#F59E0B")  # amber
-        c4 = DashboardCard("Pending Payments", "Rs. 0", "⏳", "#EF4444") # red
-        
-        grid.addWidget(c1, 0, 0)
-        grid.addWidget(c2, 0, 1)
-        grid.addWidget(c3, 1, 0)
-        grid.addWidget(c4, 1, 1)
-        
-        root.addLayout(grid)
-        
-        # Recent Invoices Section (Placeholder)
+        # Quick Actions Section
         root.addSpacing(16)
-        inv_title = QLabel("Recent Invoices")
-        inv_title.setStyleSheet(f"color: {COLORS['text_primary']}; font-size: 18px; font-weight: 600;")
-        root.addWidget(inv_title)
+        qa_title = QLabel("Quick Actions")
+        qa_title.setStyleSheet(f"color: {COLORS['text_primary']}; font-size: 18px; font-weight: 600;")
+        root.addWidget(qa_title)
         
-        empty_state = QFrame()
-        empty_state.setObjectName("card")
-        empty_state.setStyleSheet(f"""
-            QFrame#card {{
-                background-color: {COLORS['bg_card']};
-                border: 1px dashed {COLORS['border']};
-                border-radius: 12px;
+        qa_grid = QGridLayout()
+        qa_grid.setSpacing(20)
+        
+        # Row 1
+        qa_grid.addWidget(self._create_quick_btn("📄 Create Invoice", "create_invoice"), 0, 0)
+        qa_grid.addWidget(self._create_quick_btn("👥 Add Customer", "add_customer"), 0, 1)
+        qa_grid.addWidget(self._create_quick_btn("📝 Create Quotation", "create_quotation"), 0, 2)
+        qa_grid.addWidget(self._create_quick_btn("📖 Day Book", "open_day_book"), 0, 3)
+        
+        # Row 2
+        qa_grid.addWidget(self._create_quick_btn("💳 Add Expense", "add_expense"), 1, 0)
+        qa_grid.addWidget(self._create_quick_btn("🏢 Create Vendor Bill", "create_vendor_bill"), 1, 1)
+        qa_grid.addWidget(self._create_quick_btn("👷 Add Employee", "add_employee"), 1, 2)
+        qa_grid.addWidget(self._create_quick_btn("💾 Create Backup", "create_backup"), 1, 3)
+        
+        # Row 3
+        qa_grid.addWidget(self._create_quick_btn("💰 Add Payment", "add_payment"), 2, 0)
+        qa_grid.addWidget(self._create_quick_btn("📦 Add Service", "add_service"), 2, 1)
+        qa_grid.addWidget(self._create_quick_btn("🤝 Add Vendor", "add_vendor"), 2, 2)
+        
+        root.addLayout(qa_grid)
+        
+        # Push everything to the top
+        root.addStretch()
+        
+    def _create_quick_btn(self, text: str, action: str) -> QPushButton:
+        btn = QPushButton(text)
+        btn.setFixedHeight(70)
+        btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['bg_input']};
+                color: {COLORS['text_primary']};
+                border: 1px solid {COLORS['border_card']};
+                border-radius: 8px;
+                font-weight: 600;
+                font-size: 15px;
+                padding: 12px;
+                text-align: center;
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['primary']};
+                color: white;
+                border: 1px solid {COLORS['primary']};
             }}
         """)
-        empty_state.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        el = QVBoxLayout(empty_state)
-        el.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
-        msg = QLabel("No invoices found for this company yet.")
-        msg.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 13px; background: transparent;")
-        el.addWidget(msg)
-        
-        root.addWidget(empty_state)
+        btn.clicked.connect(lambda _, a=action: self.action_requested.emit(a))
+        return btn
         
     def set_company(self, company_id: int):
         """Called when company dropdown changes in the header."""

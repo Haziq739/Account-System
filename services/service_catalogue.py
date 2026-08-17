@@ -7,9 +7,9 @@ class ServiceCatalogue:
     """Service to handle Service Catalogue CRUD operations."""
     
     @staticmethod
-    def get_services(search_term: str = "") -> list[dict]:
+    def get_services(company_id: int, search_term: str = "") -> list[dict]:
         with SessionLocal() as s:
-            query = s.query(Service).filter(Service.is_deleted == False)
+            query = s.query(Service).filter(Service.company_id == company_id, Service.is_deleted == False)
             
             if search_term:
                 term = f"%{search_term}%"
@@ -35,17 +35,19 @@ class ServiceCatalogue:
             return results
 
     @staticmethod
-    def create_service(category: str, name: str, description: str, price: float, user_id: int) -> dict:
+    def create_service(company_id: int, category: str, name: str, description: str, price: float, user_id: int) -> dict:
         with SessionLocal() as s:
             existing = s.query(Service).filter(
+                Service.company_id == company_id,
                 Service.name == name,
                 Service.is_deleted == False
             ).first()
             
             if existing:
-                raise ValueError("A service with this name already exists.")
+                raise ValueError("A service with this name already exists in this company.")
                 
             srv = Service(
+                company_id=company_id,
                 category=category,
                 name=name,
                 description=description,
@@ -73,14 +75,15 @@ class ServiceCatalogue:
             if not srv or srv.is_deleted:
                 return False
                 
-            # Check for name collisions
+            # Check for name collisions within the same company
             existing = s.query(Service).filter(
+                Service.company_id == srv.company_id,
                 Service.name == name,
                 Service.id != service_id,
                 Service.is_deleted == False
             ).first()
             if existing:
-                raise ValueError("Another service with this name already exists.")
+                raise ValueError("Another service with this name already exists in this company.")
                 
             changes = []
             if srv.category != category: changes.append(f"Category: {srv.category} -> {category}")

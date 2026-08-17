@@ -43,19 +43,21 @@ class VendorService:
     @staticmethod
     def create_vendor(company_id: int, name: str, phone: str, address: str, user_id: int = None) -> dict:
         """Creates a new vendor. Raises ValueError if duplicate name or phone exists within the company."""
+        from sqlalchemy import func
         with SessionLocal() as s:
             # Check duplicates among active vendors in the SAME company
+            conditions = [func.lower(Vendor.name) == name.lower()]
+            if phone:
+                conditions.append(Vendor.phone == phone)
+                
             existing = s.query(Vendor).filter(
                 Vendor.company_id == company_id,
                 Vendor.is_deleted == False,
-                or_(
-                    Vendor.name == name,
-                    Vendor.phone == phone
-                )
+                or_(*conditions)
             ).first()
             
             if existing:
-                raise ValueError("A vendor with this name or phone already exists in this company.")
+                raise ValueError("Duplicates found")
 
             new_v = Vendor(
                 company_id=company_id,
@@ -85,17 +87,19 @@ class VendorService:
                 return False
                 
             # Check duplicates (excluding self) in the SAME company
+            from sqlalchemy import func
+            conditions = [func.lower(Vendor.name) == name.lower()]
+            if phone:
+                conditions.append(Vendor.phone == phone)
+                
             existing = s.query(Vendor).filter(
                 Vendor.id != vendor_id,
                 Vendor.company_id == company_id,
                 Vendor.is_deleted == False,
-                or_(
-                    Vendor.name == name,
-                    Vendor.phone == phone
-                )
+                or_(*conditions)
             ).first()
             if existing:
-                raise ValueError("Another vendor with this name or phone already exists in this company.")
+                raise ValueError("Duplicates found")
                 
             v.name = name
             v.phone = phone

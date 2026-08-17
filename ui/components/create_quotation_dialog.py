@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
     QLineEdit, QPushButton, QComboBox, QTableWidget,
-    QTableWidgetItem, QHeaderView, QAbstractItemView, QWidget, QGridLayout
+    QTableWidgetItem, QHeaderView, QAbstractItemView, QWidget, QGridLayout, QCompleter, QTextEdit
 )
 from PySide6.QtCore import Qt
 from ui.design_system import COLORS
@@ -19,7 +19,11 @@ def _btn(text: str, primary: bool = False, icon: str = "") -> QPushButton:
     b.setCursor(Qt.CursorShape.PointingHandCursor)
     return b
 
+
+from ui.components.dynamic_add_dialog import DynamicAddDialog
+
 class CreateQuotationDialog(QDialog):
+
     """Full screen dialog to create a new quotation."""
     
     # Removed CATEGORIES dict
@@ -58,6 +62,21 @@ class CreateQuotationDialog(QDialog):
                 color: {COLORS['text_primary']}; 
                 background-color: {COLORS['bg_input']}; 
             }}
+            QComboBox QAbstractItemView {{
+                background-color: {COLORS['bg_card']};
+                border: 1px solid {COLORS['border']};
+                outline: 0px;
+            }}
+            QComboBox QAbstractItemView::item {{
+                padding: 8px;
+                border: none;
+                color: {COLORS['text_primary']};
+                background-color: transparent;
+            }}
+            QComboBox QAbstractItemView::item:selected, QComboBox QAbstractItemView::item:hover {{
+                background-color: {COLORS['primary']};
+                color: white;
+            }}
         """)
         
         self._load_data()
@@ -69,8 +88,14 @@ class CreateQuotationDialog(QDialog):
         else:
             self._calculate_totals()
 
+    def accept(self):
+        pass
+        
+    def _force_accept(self):
+        super().accept()
+
     def _load_existing_quotation(self):
-        inv = QuotationService.get_quotation_by_id(self.quotation_id)
+        inv = QuotationService.get_quotation(self.quotation_id)
         if not inv: return
         
         idx = self.customer_cb.findData(inv["customer_id"])
@@ -92,8 +117,15 @@ class CreateQuotationDialog(QDialog):
                 self.tax_enabled = comp.tax_enabled
                 self.tax_rate = float(comp.default_tax_rate)
                 
-        self.customers = CustomerService.get_customers(customer_type=self.context)
-        self.all_services = ServiceCatalogue.get_services()
+        self.customers = CustomerService.get_customers(self.company_id, customer_type=self.context)
+        self.all_services = ServiceCatalogue.get_services(self.company_id)
+
+
+    def keyPressEvent(self, event):
+        from PySide6.QtCore import Qt
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            return
+        super().keyPressEvent(event)
 
     def _build(self):
         root = QVBoxLayout(self)
@@ -107,10 +139,29 @@ class CreateQuotationDialog(QDialog):
         cust_layout = QVBoxLayout()
         cust_layout.addWidget(QLabel("Customer *"))
         self.customer_cb = QComboBox()
-        self.customer_cb.addItem("-- Select Customer --", None)
+        self.customer_cb.setEditable(True)
+        self.customer_cb.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+        self.customer_cb.lineEdit().setPlaceholderText("Search or enter new customer...")
         for c in self.customers:
             display_name = f"{c['name']} ({c['phone']})" if c.get('phone') else c['name']
             self.customer_cb.addItem(display_name, c['id'])
+        
+        completer = self.customer_cb.completer()
+        completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
+        completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        completer.setFilterMode(Qt.MatchFlag.MatchContains)
+        
+        popup = completer.popup()
+        from PySide6.QtWidgets import QFrame
+        popup.setFrameShape(QFrame.Shape.NoFrame)
+        popup.setStyleSheet(f"""
+            QListView {{ outline: 0px; padding-top: 3px; padding-bottom: 0px; padding-left: 1px; padding-right: 1px; margin: 0px; background-color: {COLORS['bg_card']}; color: {COLORS['text_primary']}; border: 1px solid {COLORS['border']}; border-radius: 0px; }}
+            QListView::item {{ padding: 8px; border: none; }}
+            QListView::item:selected, QListView::item:hover {{ background-color: {COLORS['primary']}; color: white; border: none; }}
+        """)
+        
+        self.customer_cb.lineEdit().returnPressed.connect(self._on_customer_entered)
+        
         cust_layout.addWidget(self.customer_cb)
         top_layout.addLayout(cust_layout)
         
@@ -141,7 +192,7 @@ class CreateQuotationDialog(QDialog):
                 background-color: transparent;
                 color: {COLORS['text_primary']};
                 border: none;
-                outline: none;
+                outline: 0px;
             }}
         """)
         self.table.verticalHeader().setVisible(False)
@@ -160,10 +211,31 @@ class CreateQuotationDialog(QDialog):
         
         root.addWidget(self.table)
         
-        # Add Item Button
-        add_item_btn = _btn("Add Service Item", icon="➕")
-        add_item_btn.clicked.connect(self._add_item_row)
-        root.addWidget(add_item_btn, alignment=Qt.AlignmentFlag.AlignLeft)
+        srv_search_layout = QVBoxLayout()
+        srv_search_layout.addWidget(QLabel("Service Search *", styleSheet=f"color: {COLORS['text_primary']}; font-weight: 500; font-size: 13px;"))
+        self.service_cb = QComboBox()
+        self.service_cb.setEditable(True)
+        self.service_cb.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+        self.service_cb.lineEdit().setPlaceholderText("Search or enter new service...")
+        self._populate_service_cb()
+        
+        srv_completer = self.service_cb.completer()
+        srv_completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
+        srv_completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        srv_completer.setFilterMode(Qt.MatchFlag.MatchContains)
+        
+        srv_popup = srv_completer.popup()
+        srv_popup.setStyleSheet(f"""
+            QListView {{ outline: 0px; padding-top: 3px; padding-bottom: 0px; padding-left: 1px; padding-right: 1px; margin: 0px; background-color: {COLORS['bg_card']}; color: {COLORS['text_primary']}; border: 1px solid {COLORS['border']}; border-radius: 0px; }}
+            QListView::item {{ padding: 8px; border: none; }}
+            QListView::item:selected {{ background-color: {COLORS['primary']}; color: white; border: none; }}
+        """)
+        
+        self.service_cb.setCompleter(srv_completer)
+        self.service_cb.lineEdit().returnPressed.connect(self._on_service_entered)
+        
+        srv_search_layout.addWidget(self.service_cb)
+        root.addLayout(srv_search_layout)
         
         # ── Bottom Section: Totals & Payments ──────────────────────
         bottom_layout = QHBoxLayout()
@@ -171,7 +243,20 @@ class CreateQuotationDialog(QDialog):
         # Notes
         notes_layout = QVBoxLayout()
         notes_layout.addWidget(QLabel("Notes (Optional)"))
-        self.notes_input = QLineEdit()
+        self.notes_input = QTextEdit()
+        self.notes_input.setFixedHeight(80)
+        self.notes_input.setStyleSheet(f"""
+            QTextEdit {{
+                background-color: {COLORS['bg_input']};
+                border: 1px solid {COLORS['border']};
+                border-radius: 6px;
+                padding: 6px 10px;
+                color: {COLORS['text_primary']};
+            }}
+            QTextEdit:focus {{
+                border: 1px solid {COLORS['primary']};
+            }}
+        """)
         notes_layout.addWidget(self.notes_input)
         bottom_layout.addLayout(notes_layout, stretch=1)
         
@@ -223,8 +308,94 @@ class CreateQuotationDialog(QDialog):
         
         # Save btn
         save_btn = _btn("Save and Generate Quotation", primary=True)
+        save_btn.setAutoDefault(False)
+        save_btn.setDefault(False)
         save_btn.clicked.connect(self._save)
         root.addWidget(save_btn, alignment=Qt.AlignmentFlag.AlignRight)
+
+    def _populate_service_cb(self):
+        self.service_cb.clear()
+        for s in self.all_services:
+            self.service_cb.addItem(s["name"], s["id"])
+
+    def _on_customer_entered(self):
+        text = self.customer_cb.lineEdit().text().strip()
+        if not text: return
+        
+        idx = self.customer_cb.findText(text, Qt.MatchFlag.MatchContains)
+        if idx >= 0:
+            self.customer_cb.setCurrentIndex(idx)
+            return
+            
+        dlg = DynamicAddDialog(self, "Add Customer", f"Customer '{text}' not found.\nDo you want to add this customer?", "Phone Number (Optional)")
+        if dlg.exec():
+            phone, _ = dlg.get_inputs()
+            try:
+                new_cust = CustomerService.create_customer(self.company_id, text, phone, "", self.current_user["id"], self.context)
+                self.customers = CustomerService.get_customers(self.company_id, customer_type=self.context)
+                
+                self.customer_cb.clear()
+                for c in self.customers:
+                    display_name = f"{c['name']} ({c['phone']})" if c.get('phone') else c['name']
+                    self.customer_cb.addItem(display_name, c['id'])
+                    
+                idx = self.customer_cb.findData(new_cust["id"])
+                if idx >= 0: self.customer_cb.setCurrentIndex(idx)
+                
+                show_message(self, "success", "Success", f"New customer '{new_cust['name']}' added successfully.")
+                
+            except ValueError as e:
+                from ui.auth.setup_window import handle_duplicate_error
+                if not handle_duplicate_error(self, e):
+                    show_message(self, "error", "Error", str(e))
+            except Exception as e:
+                show_message(self, "error", "Error", str(e))
+        else:
+            self.customer_cb.lineEdit().clear()
+
+    def _on_service_entered(self):
+        text = self.service_cb.lineEdit().text().strip()
+        if not text: return
+        
+        idx = self.service_cb.findText(text, Qt.MatchFlag.MatchContains)
+        if idx >= 0:
+            self.service_cb.setCurrentIndex(idx)
+            srv_id = self.service_cb.itemData(idx)
+            if srv_id:
+                srv = next((s for s in self.all_services if s["id"] == srv_id), None)
+                if srv:
+                    self._add_item_row()
+                    row = self.table.rowCount() - 1
+                    row_srv_cb = self.table.cellWidget(row, 1)
+                    idx = row_srv_cb.findData(srv_id)
+                    if idx >= 0: row_srv_cb.setCurrentIndex(idx)
+                    self.service_cb.lineEdit().clear()
+            return
+            
+        dlg = DynamicAddDialog(self, "Add Service", f"Service '{text}' not found.\nDo you want to add this service?", "Default Price (Required)", "Description (Required)")
+        if dlg.exec():
+            price_text, desc_text = dlg.get_inputs()
+            try:
+                price = float(price_text)
+                new_srv = ServiceCatalogue.create_service(self.company_id, "General", text, desc_text, price, self.current_user["id"])
+                self.all_services = ServiceCatalogue.get_services(self.company_id)
+                self.filtered_services = self.all_services
+                
+                self._populate_service_cb()
+                self._add_item_row()
+                row = self.table.rowCount() - 1
+                row_srv_cb = self.table.cellWidget(row, 1)
+                idx = row_srv_cb.findData(new_srv["id"])
+                if idx >= 0: row_srv_cb.setCurrentIndex(idx)
+                
+                self.service_cb.lineEdit().clear()
+                
+            except ValueError:
+                show_message(self, "error", "Error", "Invalid price amount.")
+            except Exception as e:
+                show_message(self, "error", "Error", str(e))
+        else:
+            self.service_cb.lineEdit().clear()
 
     def _add_item_row(self, existing_item: dict = None):
         if not self.filtered_services:
@@ -277,9 +448,9 @@ class CreateQuotationDialog(QDialog):
         if existing_item:
             idx = srv_cb.findData(existing_item["service_id"])
             if idx >= 0: srv_cb.setCurrentIndex(idx)
-            desc_input.setText(existing_item["description"] or "")
-            qty_input.setText(str(existing_item["quantity"]))
-            price_input.setText(str(existing_item["unit_price"]))
+            desc_input.setText(existing_item.get("description", ""))
+            qty_input.setText(str(existing_item.get("quantity", 1)))
+            price_input.setText(str(existing_item.get("unit_price", 0)))
         else:
             self._on_service_selected(row)
 
@@ -367,7 +538,7 @@ class CreateQuotationDialog(QDialog):
         tax = self._get_float(self.tax_input.text()) if self.tax_enabled else 0.0
         net = self._get_float(self.net_total_lbl.text())
         
-        notes = self.notes_input.text().strip()
+        notes = self.notes_input.toPlainText().strip()
         
         try:
             if self.quotation_id:
@@ -386,7 +557,7 @@ class CreateQuotationDialog(QDialog):
                 show_message(self, "success", "Success", "Quotation generated successfully!")
                 self._auto_save_quotation_pdf(inv_res["quotation_id"])
                     
-            self.accept()
+            self._force_accept()
         except Exception as e:
             show_message(self, "error", "Error", f"Failed to save quotation:\n{str(e)}")
 

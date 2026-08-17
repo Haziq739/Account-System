@@ -228,13 +228,33 @@ def _backup_quotations(company_id: int, company_name: str, backup_folder: Path) 
     return copied > 0, errors
 
 
-def _backup_daybook(company_name: str, backup_folder: Path) -> tuple:
-    """Copy individual Day Book PDFs for this company."""
+def _backup_daybook(company_id: int, company_name: str, backup_folder: Path) -> tuple:
+    """Copy individual Day Book PDFs for this company and generate today's if missing."""
     safe = company_name.replace(" ", "_")
     dst = backup_folder / "day_book" / safe
     
+    # Force creation of the backup directory even if empty
+    dst.mkdir(parents=True, exist_ok=True)
+    
     c1, e1 = _copy_folder(Path.home() / "Documents" / "Day_Book" / safe, dst)
     c2, e2 = _copy_folder(_desktop() / "Day_Book" / safe, dst)
+    
+    # Also explicitly generate "Today's" Day Book on the fly and put it in the backup
+    # just in case the midnight cron hasn't fired yet
+    try:
+        from datetime import date
+        from services.daybook_service import DayBookService
+        from services.pdf_generator import PDFGenerator
+        import shutil
+        
+        today = date.today()
+        data = DayBookService.get_daybook_transactions(company_id, today)
+        gen_path = PDFGenerator.generate_daybook_pdf(company_id, today, data)
+        if gen_path and Path(gen_path).exists():
+            shutil.copy2(gen_path, str(dst / Path(gen_path).name))
+            c2 += 1
+    except Exception as e:
+        e2.append(f"Failed to auto-generate today's day book during backup: {e}")
     
     return c1 + c2 > 0, e1 + e2
 
@@ -749,7 +769,7 @@ def create_backup(company_id: int, company_name: str) -> tuple:
         if errs:
             errors.extend(errs)
 
-        ok, errs = _backup_daybook(company_name, backup_folder)
+        ok, errs = _backup_daybook(company_id, company_name, backup_folder)
         count = len(list((backup_folder / "day_book" / company_name.replace(" ", "_")).glob("*.pdf"))) if (backup_folder / "day_book" / company_name.replace(" ", "_")).exists() else 0
         modules_status.append(("Day Book", "Individual PDFs (copied)", f"{count} files copied" if ok or count > 0 else f"Failed: {errs}"))
         if errs:
@@ -867,60 +887,10 @@ def restore_backup(backup_dir_str: str, target_company_id: int, target_company_n
         safe_dir.mkdir(parents=True, exist_ok=True)
         shutil.copy2(DATABASE_PATH, safe_dir / "K_Dynamics_System.db")
 
-    # ── Database Merge ─────────────────────────────────────────────────
+    # ── Replace Database ───────────────────────────────────────────────
     try:
-        cid = target_company_id
-        
-        # 1. Read Backup Data
-        backup_conn = sqlite3.connect(str(backup_db_path))
-        
-        def fetch_tbl(table, where=""):
-            cur = backup_conn.execute(f"SELECT * FROM {table} {where}")
-            return cur.fetchall()
-
-        backup_data = {}
-        for tbl in ['companies', 'users', 'customers', 'services', 'settings']:
-            backup_data[tbl] = fetch_tbl(tbl)
-            
-        parent_tables = ['invoices', 'customer_ledger', 'payments', 'quotations', 'vendors', 'vendor_bills', 'employees', 'employee_advances', 'expenses']
-        for tbl in parent_tables:
-            backup_data[tbl] = fetch_tbl(tbl, f"WHERE company_id = {cid}")
-            
-        backup_data['invoice_items'] = fetch_tbl("invoice_items", f"WHERE invoice_id IN (SELECT id FROM invoices WHERE company_id = {cid})")
-        backup_data['quotation_items'] = fetch_tbl("quotation_items", f"WHERE quotation_id IN (SELECT id FROM quotations WHERE company_id = {cid})")
-        backup_conn.close()
-
-        # 2. Write to Live DB
-        conn = sqlite3.connect(str(DATABASE_PATH))
-        conn.execute("PRAGMA foreign_keys = OFF;")
-        
-        def get_placeholders(row):
-            return ",".join(["?"] * len(row))
-            
-        # Upsert global tables
-        for tbl in ['companies', 'users', 'customers', 'services', 'settings']:
-            for row in backup_data[tbl]:
-                conn.execute(f"INSERT OR IGNORE INTO {tbl} VALUES ({get_placeholders(row)})", row)
-                
-        # Delete related tables matching the company
-        conn.execute(f"DELETE FROM invoice_items WHERE invoice_id IN (SELECT id FROM invoices WHERE company_id = {cid});")
-        conn.execute(f"DELETE FROM quotation_items WHERE quotation_id IN (SELECT id FROM quotations WHERE company_id = {cid});")
-        
-        for tbl in parent_tables:
-            conn.execute(f"DELETE FROM {tbl} WHERE company_id = {cid};")
-            
-        # Insert matching rows from backup
-        for tbl in parent_tables:
-            for row in backup_data[tbl]:
-                conn.execute(f"INSERT INTO {tbl} VALUES ({get_placeholders(row)})", row)
-                
-        for row in backup_data['invoice_items']:
-            conn.execute(f"INSERT INTO invoice_items VALUES ({get_placeholders(row)})", row)
-        for row in backup_data['quotation_items']:
-            conn.execute(f"INSERT INTO quotation_items VALUES ({get_placeholders(row)})", row)
-            
-        conn.commit()
-        conn.close()
+        # Overwrite the live database file directly with the backed-up database
+        shutil.copy2(backup_db_path, DATABASE_PATH)
     except Exception as e:
         return False, f"Database restore failed: {e}"
 

@@ -116,6 +116,78 @@ def show_message(parent, kind: str, title: str, text: str):
     center_window(dlg)
     dlg.exec()
 
+def show_duplicate_message(parent):
+    """
+    Shows a 'Duplicates found' message with only a Cancel button.
+    """
+    dlg = QDialog(parent)
+    dlg.setWindowTitle("Duplicates found")
+    dlg.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
+    dlg.setMinimumWidth(320)
+    dlg.setMaximumWidth(400)
+    
+    dlg.setStyleSheet(f"""
+        QDialog {{
+            background-color: {COLORS['bg_card']};
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }}
+        QLabel#icon_lbl {{
+            font-size: 28px;
+            background: transparent;
+        }}
+        QLabel#msg_lbl {{
+            color: {COLORS['text_primary']};
+            font-size: 14px;
+            font-weight: bold;
+            background: transparent;
+        }}
+        QPushButton {{
+            background-color: {COLORS['bg_input']};
+            color: {COLORS['text_primary']};
+            border: 1px solid {COLORS['border']};
+            border-radius: 7px;
+            padding: 9px 28px;
+            font-size: 13px;
+            font-weight: 600;
+            min-width: 80px;
+        }}
+        QPushButton:hover {{ background-color: #E2E8F0; }}
+    """)
+    
+    root = QVBoxLayout(dlg)
+    root.setContentsMargins(24, 20, 24, 20)
+    root.setSpacing(14)
+    
+    icon_lbl = QLabel("⚠️")
+    icon_lbl.setObjectName("icon_lbl")
+    icon_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    root.addWidget(icon_lbl)
+    
+    msg_lbl = QLabel("Duplicates found")
+    msg_lbl.setObjectName("msg_lbl")
+    msg_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    root.addWidget(msg_lbl)
+    
+    cancel_btn = QPushButton("Cancel")
+    cancel_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+    cancel_btn.clicked.connect(dlg.reject)
+    
+    btn_row = QHBoxLayout()
+    btn_row.addStretch()
+    btn_row.addWidget(cancel_btn)
+    btn_row.addStretch()
+    root.addLayout(btn_row)
+    
+    dlg.adjustSize()
+    center_window(dlg)
+    dlg.exec()
+
+def handle_duplicate_error(parent, e: Exception) -> bool:
+    """Checks if exception is a duplicate error, shows the dialog if so, and returns True."""
+    if isinstance(e, ValueError) and str(e) == "Duplicates found":
+        show_duplicate_message(parent)
+        return True
+    return False
 
 # ── Setup Window (First-run) ───────────────────────────────────────────────────
 

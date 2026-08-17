@@ -11,10 +11,11 @@ class CustomerService:
     """Service layer for Customer Management."""
 
     @staticmethod
-    def get_customers(search_term: str = "", customer_type: str = "regular") -> List[dict]:
-        """Fetch all active customers, optionally filtered by search term and type."""
+    def get_customers(company_id: int, search_term: str = "", customer_type: str = "regular") -> List[dict]:
+        """Fetch all active customers for a specific company, optionally filtered by search term and type."""
         with SessionLocal() as s:
             query = s.query(Customer).filter(
+                Customer.company_id == company_id,
                 Customer.is_deleted == False,
                 Customer.customer_type == customer_type
             )
@@ -47,6 +48,7 @@ class CustomerService:
         with SessionLocal() as s:
             from models.invoice import Invoice
             from models.payment import Payment
+            from models.expense import Expense
             
             inv_customers = s.query(Invoice.customer_id).filter(
                 Invoice.company_id == company_id,
@@ -58,7 +60,13 @@ class CustomerService:
                 Payment.is_deleted == False
             ).distinct()
             
-            customer_ids = {c[0] for c in inv_customers}.union({c[0] for c in pay_customers})
+            exp_customers = s.query(Expense.customer_id).filter(
+                Expense.company_id == company_id,
+                Expense.customer_id.isnot(None),
+                Expense.is_deleted == False
+            ).distinct()
+            
+            customer_ids = {c[0] for c in inv_customers}.union({c[0] for c in pay_customers}).union({c[0] for c in exp_customers})
             
             if not customer_ids:
                 return []
@@ -81,22 +89,26 @@ class CustomerService:
             return results
 
     @staticmethod
-    def create_customer(name: str, phone: str, address: str, user_id: int = None, customer_type: str = "regular") -> dict:
+    def create_customer(company_id: int, name: str, phone: str, address: str, user_id: int = None, customer_type: str = "regular") -> dict:
         """Creates a new customer. Raises ValueError if duplicate name or phone exists."""
+        from sqlalchemy import func
         with SessionLocal() as s:
             # Check duplicates among active customers
+            conditions = [func.lower(Customer.name) == name.lower()]
+            if phone:
+                conditions.append(Customer.phone == phone)
+                
             existing = s.query(Customer).filter(
+                Customer.company_id == company_id,
                 Customer.is_deleted == False,
-                or_(
-                    Customer.name == name,
-                    Customer.phone == phone
-                )
+                or_(*conditions)
             ).first()
             
             if existing:
-                raise ValueError("A customer with this name or phone already exists.")
+                raise ValueError("Duplicates found")
 
             new_c = Customer(
+                company_id=company_id,
                 name=name,
                 phone=phone,
                 address=address,
@@ -123,17 +135,20 @@ class CustomerService:
             if not c:
                 return False
                 
-            # Check duplicates (excluding self)
+            # Check duplicates (excluding self) within the same company
+            from sqlalchemy import func
+            conditions = [func.lower(Customer.name) == name.lower()]
+            if phone:
+                conditions.append(Customer.phone == phone)
+                
             existing = s.query(Customer).filter(
+                Customer.company_id == c.company_id,
                 Customer.id != customer_id,
                 Customer.is_deleted == False,
-                or_(
-                    Customer.name == name,
-                    Customer.phone == phone
-                )
+                or_(*conditions)
             ).first()
             if existing:
-                raise ValueError("Another customer with this name or phone already exists.")
+                raise ValueError("Duplicates found")
                 
             c.name = name
             c.phone = phone
@@ -159,7 +174,7 @@ class CustomerService:
             return True
 
     @staticmethod
-    def import_customers_from_csv(file_path: str, user_id: int = None, customer_type: str = "regular") -> Tuple[int, int, int]:
+    def import_customers_from_csv(company_id: int, file_path: str, user_id: int = None, customer_type: str = "regular") -> Tuple[int, int, int]:
         """
         Reads CSV and imports customers.
         Returns tuple: (imported_count, skipped_count, failed_count)
@@ -185,7 +200,10 @@ class CustomerService:
 
                 with SessionLocal() as s:
                     # Pre-load all active names and phones into memory for instant duplicate checking
-                    active_custs = s.query(Customer.name, Customer.phone).filter(Customer.is_deleted == False).all()
+                    active_custs = s.query(Customer.name, Customer.phone).filter(
+                        Customer.company_id == company_id,
+                        Customer.is_deleted == False
+                    ).all()
                     existing_names = {c.name.lower() for c in active_custs if c.name}
                     existing_phones = {c.phone for c in active_custs if c.phone}
                     
@@ -215,6 +233,7 @@ class CustomerService:
                             continue
                             
                         new_c = Customer(
+                            company_id=company_id,
                             name=name,
                             phone=phone,
                             address=addr,

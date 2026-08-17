@@ -1,4 +1,6 @@
 from PySide6.QtWidgets import (
+    QGridLayout,
+    QSizePolicy,
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
     QLineEdit, QPushButton, QComboBox, QTextEdit
 )
@@ -68,17 +70,22 @@ class ServiceFormDialog(QDialog):
         layout.addWidget(self.desc_input)
         
         # Buttons
-        btn_layout = QHBoxLayout()
-        btn_layout.addStretch()
+        btn_layout = QGridLayout()
+        btn_layout.setColumnStretch(0, 1)
+        btn_layout.setColumnStretch(1, 1)
         
         cancel_btn = _btn("Cancel")
         cancel_btn.clicked.connect(self.reject)
         
-        save_btn = _btn("Save Service", primary=True)
+        save_text = "Update" if self.is_edit else "Save Service"
+        save_btn = _btn(save_text, primary=True)
         save_btn.clicked.connect(self.accept)
         
-        btn_layout.addWidget(cancel_btn)
-        btn_layout.addWidget(save_btn)
+        cancel_btn.setFixedSize(160, 38)
+        save_btn.setFixedSize(160, 38)
+        
+        btn_layout.addWidget(cancel_btn, 0, 0)
+        btn_layout.addWidget(save_btn, 0, 1)
         
         layout.addLayout(btn_layout)
 

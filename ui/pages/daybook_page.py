@@ -86,6 +86,7 @@ class DayBookPage(QWidget):
         summary_layout = QHBoxLayout()
         summary_layout.setSpacing(20)
         
+        self.lbl_opening_balance = self._build_card(summary_layout, "Opening Balance", "0.00", COLORS['text_secondary'])
         self.lbl_income = self._build_card(summary_layout, "Total Income", "0.00", "#10B981") # Green
         self.lbl_expense = self._build_card(summary_layout, "Total Expenses", "0.00", "#EF4444") # Red
         self.lbl_balance = self._build_card(summary_layout, "Closing Balance", "0.00", COLORS['primary'])
@@ -137,6 +138,8 @@ class DayBookPage(QWidget):
         self.table.verticalHeader().setVisible(False)
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.table.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.table.cellClicked.connect(self._on_row_clicked)
         
         h = self.table.horizontalHeader()
         h.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
@@ -180,6 +183,7 @@ class DayBookPage(QWidget):
         target_date = self.date_edit.date().toPython()
         self.data = DayBookService.get_daybook_transactions(self.active_company_id, target_date)
         
+        self.lbl_opening_balance.setText(f"{self.data.get('opening_balance', 0.0):,.2f}")
         self.lbl_income.setText(f"{self.data['total_income']:,.2f}")
         self.lbl_expense.setText(f"{self.data['total_expense']:,.2f}")
         self.lbl_balance.setText(f"{self.data['balance']:,.2f}")
@@ -199,8 +203,19 @@ class DayBookPage(QWidget):
             row = self.table.rowCount()
             self.table.insertRow(row)
             
-            time_str = t['timestamp'].strftime("%I:%M %p") if t['timestamp'] else ""
-            self.table.setItem(row, 0, QTableWidgetItem(time_str))
+            time_str = ""
+            if t['timestamp']:
+                from datetime import timezone
+                # Convert from UTC to local system timezone (e.g. PKT)
+                dt = t['timestamp']
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+                local_dt = dt.astimezone()
+                time_str = local_dt.strftime("%I:%M %p")
+                
+            time_item = QTableWidgetItem(time_str)
+            time_item.setData(Qt.ItemDataRole.UserRole, t['id'])
+            self.table.setItem(row, 0, time_item)
             
             type_item = QTableWidgetItem(t['type'])
             if "Expense" in t['type']:
@@ -228,11 +243,37 @@ class DayBookPage(QWidget):
             bal_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             self.table.setItem(row, 7, bal_item)
 
+    def _on_row_clicked(self, row, col):
+        t_id = self.table.item(row, 0).data(Qt.ItemDataRole.UserRole)
+        if not t_id or not t_id.startswith("exp_"):
+            return
+            
+        expense_id = int(t_id.split("_")[1])
+        
+        from ui.pages.employees_page import RowActionDialog
+        dlg = RowActionDialog(self, f"Expense")
+        # Hide delete and history buttons since we only want edit for now
+        dlg.btn_del.setVisible(False)
+        dlg.btn_history.setVisible(False)
+        
+        res = dlg.exec()
+        if res == 2: # Edit
+            exp_data = DayBookService.get_expense(expense_id)
+            if not exp_data:
+                show_message(self, "error", "Error", "Expense not found.")
+                return
+                
+            from ui.components.add_expense_dialog import AddExpenseDialog
+            edit_dlg = AddExpenseDialog(self, self.active_company_id, self.current_user, expense_data=exp_data)
+            if edit_dlg.exec():
+                self.refresh_data()
+
     def _on_add_expense(self):
         if not self.active_company_id:
             show_message(self, "error", "Error", "No company selected.")
             return
             
+        from ui.components.add_expense_dialog import AddExpenseDialog
         dlg = AddExpenseDialog(self, self.active_company_id, self.current_user)
         if dlg.exec():
             # Only refresh if the date of the expense matches the current view date

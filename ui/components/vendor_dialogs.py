@@ -1,9 +1,12 @@
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
-    QLineEdit, QPushButton, QTextEdit, QDoubleSpinBox, QDateEdit, QComboBox
+    QLineEdit, QPushButton, QTextEdit, QDoubleSpinBox, QDateEdit, QComboBox, QCompleter, QListView,
+    QGridLayout
 )
 from PySide6.QtCore import Qt, QDate
 from ui.design_system import COLORS
+from ui.auth.setup_window import show_message
+from ui.components.dynamic_add_dialog import DynamicAddDialog
 
 def _btn(text: str, primary: bool = False) -> QPushButton:
     b = QPushButton(text)
@@ -54,13 +57,20 @@ class VendorFormDialog(QDialog):
         self.name_input.setPlaceholderText("Vendor Name (Required)")
         
         self.phone_input = QLineEdit(self.vendor_data.get("phone", ""))
-        self.phone_input.setPlaceholderText("Phone Number (Required)")
+        self.phone_input.setPlaceholderText("Phone Number (Optional)")
         
         self.address_input = QTextEdit(self.vendor_data.get("address", ""))
         self.address_input.setPlaceholderText("Full Address")
         self.address_input.setFixedHeight(100)
         
         self._build()
+
+
+    def keyPressEvent(self, event):
+        from PySide6.QtCore import Qt
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            return
+        super().keyPressEvent(event)
 
     def _build(self):
         layout = QVBoxLayout(self)
@@ -82,17 +92,55 @@ class VendorFormDialog(QDialog):
         
         layout.addStretch()
         
-        btn_layout = QHBoxLayout()
+        btn_layout = QGridLayout()
+        btn_layout.setColumnStretch(0, 1)
+        btn_layout.setColumnStretch(1, 1)
+        
         cancel_btn = _btn("Cancel")
         cancel_btn.clicked.connect(self.reject)
         
         save_btn = _btn("Save Vendor", primary=True)
-        save_btn.clicked.connect(self.accept)
+        save_btn.clicked.connect(self._validate_and_accept)
+        save_btn.setAutoDefault(False)
+        save_btn.setDefault(False)
         
-        btn_layout.addWidget(cancel_btn)
-        btn_layout.addWidget(save_btn)
+        cancel_btn.setFixedSize(160, 38)
+        save_btn.setFixedSize(160, 38)
+        
+        btn_layout.addWidget(cancel_btn, 0, 0)
+        btn_layout.addWidget(save_btn, 0, 1)
         
         layout.addLayout(btn_layout)
+
+
+    def _on_vendor_entered(self):
+        text = self.vendor_cb.lineEdit().text().strip()
+        if not text: return
+        
+        idx = self.vendor_cb.findText(text, Qt.MatchFlag.MatchContains)
+        if idx >= 0:
+            self.vendor_cb.setCurrentIndex(idx)
+            return
+            
+        dlg = DynamicAddDialog(self, "Add Vendor", f"Vendor '{text}' not found.\nDo you want to add this vendor?", "Phone Number (Optional)")
+        if dlg.exec():
+            phone, _ = dlg.get_inputs()
+            try:
+                from services.vendor_service import VendorService
+                comp_id = self.parent().active_company_id
+                user_id = self.parent().current_user["id"]
+                new_vend = VendorService.create_vendor(comp_id, text, phone, "", user_id)
+                
+                self.vendor_cb.blockSignals(True)
+                display_name = f"{new_vend['name']} ({new_vend['phone']})" if new_vend.get('phone') else new_vend['name']
+                self.vendor_cb.addItem(display_name, new_vend['id'])
+                idx = self.vendor_cb.findData(new_vend["id"])
+                if idx >= 0: self.vendor_cb.setCurrentIndex(idx)
+                self.vendor_cb.blockSignals(False)
+            except Exception as e:
+                show_message(self, "error", "Error", str(e))
+        else:
+            self.vendor_cb.lineEdit().clear()
 
     def get_data(self) -> dict:
         return {
@@ -100,6 +148,16 @@ class VendorFormDialog(QDialog):
             "phone": self.phone_input.text().strip(),
             "address": self.address_input.toPlainText().strip()
         }
+
+    def _validate_and_accept(self):
+        name = self.name_input.text().strip()
+        
+        if not name:
+            show_message(self, "error", "Validation Error", "Vendor Name is required.")
+            return
+            
+            
+        self.accept()
 
 
 class CreateBillDialog(QDialog):
@@ -114,7 +172,7 @@ class CreateBillDialog(QDialog):
         self.setFixedSize(460, 560)
         self.setStyleSheet(f"""
             QDialog {{ background-color: {COLORS['bg_card']}; }}
-            QLineEdit, QTextEdit, QComboBox, QDoubleSpinBox, QDateEdit {{
+            QLineEdit, QTextEdit, QComboBox, QCompleter, QListView, QDoubleSpinBox, QDateEdit {{
                 background-color: {COLORS['bg_input']};
                 border: 1px solid {COLORS['border']};
                 border-radius: 6px;
@@ -122,15 +180,50 @@ class CreateBillDialog(QDialog):
                 color: {COLORS['text_primary']};
                 font-size: 14px;
             }}
-            QLineEdit:focus, QTextEdit:focus, QComboBox:focus, QDoubleSpinBox:focus, QDateEdit:focus {{
+            QLineEdit:focus, QTextEdit:focus, QComboBox, QCompleter, QListView:focus, QDoubleSpinBox:focus, QDateEdit:focus {{
                 border: 1px solid {COLORS['primary']};
+            }}
+            QComboBox QAbstractItemView {{
+                background-color: {COLORS['bg_card']};
+                border: 1px solid {COLORS['border']};
+                outline: 0px;
+            }}
+            QComboBox QAbstractItemView::item {{
+                padding: 8px;
+                border: none;
+                color: {COLORS['text_primary']};
+                background-color: transparent;
+            }}
+            QComboBox QAbstractItemView::item:selected, QComboBox QAbstractItemView::item:hover {{
+                background-color: {COLORS['primary']};
+                color: white;
             }}
         """)
         
         self.vendor_cb = QComboBox()
-        self.vendor_cb.addItem("-- Select Vendor --", None)
+        self.vendor_cb.setEditable(True)
+        self.vendor_cb.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+        self.vendor_cb.lineEdit().setPlaceholderText("Search or enter new vendor...")
+
         for v in self.vendors:
             self.vendor_cb.addItem(v['name'], v['id'])
+        self.vendor_cb.setCurrentIndex(-1)
+            
+        completer = self.vendor_cb.completer()
+        completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
+        completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        completer.setFilterMode(Qt.MatchFlag.MatchContains)
+        
+        popup = completer.popup()
+        from PySide6.QtWidgets import QFrame
+        popup.setFrameShape(QFrame.Shape.NoFrame)
+        popup.setStyleSheet(f"""
+            QListView {{ outline: 0px; padding-top: 3px; padding-bottom: 0px; padding-left: 1px; padding-right: 1px; margin: 0px; background-color: {COLORS['bg_card']}; color: {COLORS['text_primary']}; border: 1px solid {COLORS['border']}; border-radius: 0px; }}
+            QListView::item {{ padding: 8px; border: none; }}
+            QListView::item:selected, QListView::item:hover {{ background-color: {COLORS['primary']}; color: white; border: none; }}
+        """)
+        
+        self.vendor_cb.lineEdit().returnPressed.connect(self._on_vendor_entered)
             
         self.amount_input = QDoubleSpinBox()
         self.amount_input.setRange(0, 999999999)
@@ -156,6 +249,13 @@ class CreateBillDialog(QDialog):
             
         self._build()
 
+
+    def keyPressEvent(self, event):
+        from PySide6.QtCore import Qt
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            return
+        super().keyPressEvent(event)
+
     def _build(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
@@ -179,17 +279,73 @@ class CreateBillDialog(QDialog):
         
         layout.addStretch()
         
-        btn_layout = QHBoxLayout()
+        btn_layout = QGridLayout()
+        btn_layout.setColumnStretch(0, 1)
+        btn_layout.setColumnStretch(1, 1)
+        
         cancel_btn = _btn("Cancel")
         cancel_btn.clicked.connect(self.reject)
         
         save_btn = _btn("Save Bill", primary=True)
-        save_btn.clicked.connect(self.accept)
+        save_btn.clicked.connect(self._validate_and_accept)
+        save_btn.setAutoDefault(False)
+        save_btn.setDefault(False)
         
-        btn_layout.addWidget(cancel_btn)
-        btn_layout.addWidget(save_btn)
+        cancel_btn.setFixedSize(160, 38)
+        save_btn.setFixedSize(160, 38)
+        
+        btn_layout.addWidget(cancel_btn, 0, 0)
+        btn_layout.addWidget(save_btn, 0, 1)
         
         layout.addLayout(btn_layout)
+
+
+    def _validate_and_accept(self):
+        vendor_id = self.vendor_cb.currentData()
+        amount = self.amount_input.value()
+        
+        if not vendor_id:
+            show_message(self, "error", "Validation Error", "Please select a vendor.")
+            return
+            
+        if amount <= 0:
+            show_message(self, "error", "Validation Error", "Amount must be greater than 0.")
+            return
+            
+        self.accept()
+
+    def _on_vendor_entered(self):
+        text = self.vendor_cb.lineEdit().text().strip()
+        if not text: return
+        
+        idx = self.vendor_cb.findText(text, Qt.MatchFlag.MatchContains)
+        if idx >= 0:
+            self.vendor_cb.setCurrentIndex(idx)
+            return
+            
+        dlg = DynamicAddDialog(self, "Add Vendor", f"Vendor '{text}' not found.\nDo you want to add this vendor?", "Phone Number (Optional)")
+        if dlg.exec():
+            phone, _ = dlg.get_inputs()
+            try:
+                from services.vendor_service import VendorService
+                comp_id = self.parent().active_company_id
+                user_id = self.parent().current_user["id"]
+                new_vend = VendorService.create_vendor(comp_id, text, phone, "", user_id)
+                
+                self.vendor_cb.blockSignals(True)
+                display_name = f"{new_vend['name']} ({new_vend['phone']})" if new_vend.get('phone') else new_vend['name']
+                self.vendor_cb.addItem(display_name, new_vend['id'])
+                idx = self.vendor_cb.findData(new_vend["id"])
+                if idx >= 0: self.vendor_cb.setCurrentIndex(idx)
+                self.vendor_cb.blockSignals(False)
+            except ValueError as e:
+                from ui.auth.setup_window import handle_duplicate_error
+                if not handle_duplicate_error(self, e):
+                    show_message(self, "error", "Error", str(e))
+            except Exception as e:
+                show_message(self, "error", "Error", str(e))
+        else:
+            self.vendor_cb.lineEdit().clear()
 
     def get_data(self) -> dict:
         return {

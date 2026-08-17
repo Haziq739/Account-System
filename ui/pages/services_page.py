@@ -1,7 +1,9 @@
 from PySide6.QtWidgets import (
+    QGridLayout,
+    QSizePolicy,
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
     QLineEdit, QPushButton, QTableWidget, QTableWidgetItem,
-    QHeaderView, QMessageBox, QAbstractItemView
+    QHeaderView, QMessageBox, QAbstractItemView, QDialog
 )
 from PySide6.QtCore import Qt, QTimer
 from ui.design_system import COLORS
@@ -15,14 +17,61 @@ def _btn(text: str, primary: bool = False, icon: str = "") -> QPushButton:
     b.setCursor(Qt.CursorShape.PointingHandCursor)
     return b
 
+class RowActionDialog(QDialog):
+    def __init__(self, parent, title: str):
+        super().__init__(parent)
+        self.setWindowTitle("Action")
+        self.setFixedSize(320, 160)
+        self.setWindowFlags(Qt.WindowType.Dialog)
+        self.setStyleSheet(f"QDialog {{ background-color: {COLORS['bg_card']}; border-radius: 8px; border: 1px solid {COLORS['border_card']}; }}")
+        
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 24, 24, 24)
+        
+        lbl = QLabel(title)
+        lbl.setStyleSheet(f"color: {COLORS['text_primary']}; font-size: 16px; font-weight: 600;")
+        lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(lbl)
+        
+        layout.addSpacing(20)
+        
+        btn_layout = QGridLayout()
+        btn_layout.setColumnStretch(0, 1)
+        btn_layout.setColumnStretch(1, 1)
+        btn_layout.setColumnStretch(2, 1)
+        
+        self.edit_btn = _btn("Edit", primary=True)
+        self.del_btn = QPushButton("Delete")
+        self.del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.del_btn.setStyleSheet(f"background-color: #FEE2E2; color: #EF4444; border: 1px solid #FCA5A5; padding: 8px 16px; border-radius: 6px; font-weight: 600;")
+        self.cancel_btn = _btn("Cancel")
+        
+        self.edit_btn.setFixedSize(84, 38)
+        self.del_btn.setFixedSize(84, 38)
+        self.cancel_btn.setFixedSize(84, 38)
+        
+        btn_layout.addWidget(self.edit_btn, 0, 0)
+        btn_layout.addWidget(self.del_btn, 0, 1)
+        btn_layout.addWidget(self.cancel_btn, 0, 2)
+        
+        layout.addLayout(btn_layout)
+        
+        self.cancel_btn.clicked.connect(self.reject)
+        self.edit_btn.clicked.connect(lambda: self.done(1))
+        self.del_btn.clicked.connect(lambda: self.done(2))
+
 class ServicesPage(QWidget):
     """Main Services Catalogue Management Page."""
     
     def __init__(self, current_user: dict):
         super().__init__()
         self.current_user = current_user
+        self.active_company_id = None
         self.services = []
         self._build()
+        
+    def set_company(self, company_id: int):
+        self.active_company_id = company_id
         self.refresh_data()
         
         # Debounce timer for search
@@ -70,8 +119,8 @@ class ServicesPage(QWidget):
         
         # ── Table ────────────────────────────────────────────────
         self.table = QTableWidget()
-        self.table.setColumnCount(5)
-        self.table.setHorizontalHeaderLabels(["S.No", "Service Name", "Description", "Price", "Actions"])
+        self.table.setColumnCount(4)
+        self.table.setHorizontalHeaderLabels(["S.No", "Service Name", "Description", "Price"])
         
         self.table.setStyleSheet(f"""
             QTableWidget {{
@@ -97,8 +146,8 @@ class ServicesPage(QWidget):
                 border-bottom: 1px solid {COLORS['border']};
             }}
             QTableWidget::item:selected {{
-                background-color: #E2E8F0;
-                color: {COLORS['text_primary']};
+                background-color: #EFF6FF;
+                color: {COLORS['primary']};
             }}
         """)
         self.table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -112,9 +161,9 @@ class ServicesPage(QWidget):
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
-        self.table.setColumnWidth(4, 140)
-        self.table.itemDoubleClicked.connect(self._on_row_double_clicked)
+        
+        
+        self.table.itemClicked.connect(self._on_row_clicked)
         
         root.addWidget(self.table)
 
@@ -122,8 +171,11 @@ class ServicesPage(QWidget):
         self.search_timer.start(300)
 
     def refresh_data(self):
+        if not self.active_company_id:
+            return
+            
         term = self.search_input.text().strip()
-        self.services = ServiceCatalogue.get_services(term)
+        self.services = ServiceCatalogue.get_services(self.active_company_id, term)
         
         self.table.setUpdatesEnabled(False)
         self.table.setRowCount(0)
@@ -140,35 +192,20 @@ class ServicesPage(QWidget):
             if item:
                 item.setText(str(row + 1))
 
-    def _on_row_double_clicked(self, item):
+    def _on_row_clicked(self, item):
         row = item.row()
         id_item = self.table.item(row, 0)
-        if id_item:
+        name_item = self.table.item(row, 1)
+        if id_item and name_item:
             sid = id_item.data(Qt.ItemDataRole.UserRole)
+            s_name = name_item.text()
             if sid:
-                self._on_edit(sid)
-
-    def _create_action_widget(self, sid: int) -> QWidget:
-        action_widget = QWidget()
-        action_layout = QHBoxLayout(action_widget)
-        action_layout.setContentsMargins(4, 2, 4, 2)
-        action_layout.setSpacing(8)
-        
-        edit_btn = QPushButton("✏️")
-        edit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        edit_btn.setStyleSheet("border: none; background: transparent; font-size: 14px;")
-        edit_btn.setToolTip("Edit Service")
-        edit_btn.clicked.connect(lambda checked, s_id=sid: self._on_edit(s_id))
-        
-        del_btn = QPushButton("🗑️")
-        del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        del_btn.setStyleSheet("border: none; background: transparent; font-size: 14px;")
-        del_btn.setToolTip("Delete Service")
-        del_btn.clicked.connect(lambda checked, s_id=sid: self._on_delete(s_id))
-        
-        action_layout.addWidget(edit_btn)
-        action_layout.addWidget(del_btn)
-        return action_widget
+                dlg = RowActionDialog(self, f"Service: {s_name}")
+                res = dlg.exec()
+                if res == 1:
+                    self._on_edit(sid)
+                elif res == 2:
+                    self._on_delete(sid)
 
     def _populate_row(self, row_idx: int, s: dict):
         id_item = QTableWidgetItem(str(row_idx + 1))
@@ -180,8 +217,7 @@ class ServicesPage(QWidget):
         self.table.setItem(row_idx, 2, QTableWidgetItem(s["description"]))
         self.table.setItem(row_idx, 3, QTableWidgetItem(f"{s['price']:.2f}"))
         
-        action_widget = self._create_action_widget(s["id"])
-        self.table.setCellWidget(row_idx, 4, action_widget)
+
 
     def _find_row_by_id(self, sid: int) -> int:
         for row in range(self.table.rowCount()):
@@ -203,7 +239,7 @@ class ServicesPage(QWidget):
                 
             try:
                 new_s = ServiceCatalogue.create_service(
-                    data["category"], data["name"], data["description"], data["price"], self.current_user["id"]
+                    self.active_company_id, data["category"], data["name"], data["description"], data["price"], self.current_user["id"]
                 )
                 show_message(self, "success", "Success", "Service created successfully.")
                 
@@ -211,9 +247,11 @@ class ServicesPage(QWidget):
                 self.table.insertRow(row_idx)
                 self.services.append(new_s)
                 self._populate_row(row_idx, new_s)
+                return True
                 
             except ValueError as e:
                 show_message(self, "error", "Error", str(e))
+        return False
 
     def _on_edit(self, sid: int):
         srv = next((s for s in self.services if s["id"] == sid), None)

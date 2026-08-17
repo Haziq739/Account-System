@@ -4,6 +4,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from ui.design_system import COLORS
+from ui.auth.setup_window import show_message
 
 def _btn(text: str, primary: bool = False) -> QPushButton:
     b = QPushButton(text)
@@ -45,7 +46,7 @@ class CustomerFormDialog(QDialog):
         self.name_input.setPlaceholderText("Customer Name (Required)")
         
         self.phone_input = QLineEdit(self.customer_data.get("phone", ""))
-        self.phone_input.setPlaceholderText("Phone Number (Required)")
+        self.phone_input.setPlaceholderText("Phone Number (Optional)")
         
         self.address_input = QTextEdit(self.customer_data.get("address", ""))
         self.address_input.setPlaceholderText("Full Address")
@@ -78,7 +79,7 @@ class CustomerFormDialog(QDialog):
         cancel_btn.clicked.connect(self.reject)
         
         save_btn = _btn("Save Customer", primary=True)
-        save_btn.clicked.connect(self.accept)
+        save_btn.clicked.connect(self._validate_and_accept)
         
         btn_layout.addWidget(cancel_btn)
         btn_layout.addWidget(save_btn)
@@ -91,6 +92,16 @@ class CustomerFormDialog(QDialog):
             "phone": self.phone_input.text().strip(),
             "address": self.address_input.toPlainText().strip()
         }
+
+    def _validate_and_accept(self):
+        name = self.name_input.text().strip()
+        
+        if not name:
+            show_message(self, "error", "Validation Error", "Customer Name is required.")
+            return
+            
+            
+        self.accept()
 
 
 class CSVImportSummaryDialog(QDialog):

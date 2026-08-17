@@ -1,7 +1,9 @@
 from PySide6.QtWidgets import (
+    QGridLayout,
+    QSizePolicy,
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
     QPushButton, QTableWidget, QTableWidgetItem,
-    QHeaderView, QMessageBox, QAbstractItemView, QMenu
+    QHeaderView, QMessageBox, QAbstractItemView, QDialog
 )
 from PySide6.QtCore import Qt, QThread, Signal
 import os, platform, subprocess
@@ -11,6 +13,83 @@ from services.vendor_bill_service import VendorBillService
 from services.vendor_service import VendorService
 from services.pdf_generator import PDFGenerator
 from ui.components.vendor_dialogs import CreateBillDialog
+
+
+class RowActionDialog(QDialog):
+    def __init__(self, parent=None, title_text="Action"):
+        super().__init__(parent)
+        self.setWindowTitle("Action")
+        self.setFixedWidth(320)
+        self.setStyleSheet(f"""
+            QDialog {{ 
+                background-color: {COLORS['bg_card']}; 
+                border-radius: 8px; 
+                border: 2px solid {COLORS['primary']}; 
+            }}
+            QPushButton, QPushButton#outline_btn, QPushButton#primary_btn {{
+                text-align: center;
+                padding: 12px 16px;
+                border: 1px solid {COLORS['border']};
+                border-radius: 6px;
+                background-color: {COLORS['bg_card']};
+                color: {COLORS['text_primary']};
+                font-size: 14px;
+                font-weight: 500;
+                min-height: 20px;
+            }}
+            QPushButton:hover, QPushButton#outline_btn:hover, QPushButton#primary_btn:hover {{
+                background-color: #EFF6FF;
+                border: 1px solid {COLORS['primary']};
+                color: {COLORS['primary']};
+            }}
+        """)
+        self.setWindowFlags(Qt.WindowType.Dialog)
+        
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(12)
+        
+        title_lbl = QLabel(title_text)
+        title_lbl.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold; font-size: 16px;")
+        title_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(title_lbl)
+        
+        self.btn_view = _btn("View Bill")
+        self.btn_edit = _btn("Edit Bill")
+        self.btn_download = _btn("Download Bill")
+        self.btn_del = _btn("Delete Bill")
+        self.btn_cancel = _btn("Cancel")
+        
+        self.btn_del.setStyleSheet("""
+            QPushButton, QPushButton#outline_btn {
+                background-color: #FEF2F2; 
+                color: #DC2626; 
+                border: 1px solid #FECACA; 
+                text-align: center;
+                padding: 12px 16px;
+                border-radius: 6px;
+                font-size: 14px;
+                font-weight: 500;
+                min-height: 20px;
+            }
+            QPushButton:hover, QPushButton#outline_btn:hover {
+                background-color: #FEE2E2;
+                border: 1px solid #EF4444;
+                color: #B91C1C;
+            }
+        """)
+        
+        self.btn_view.clicked.connect(lambda: self.done(1))
+        self.btn_edit.clicked.connect(lambda: self.done(2))
+        self.btn_download.clicked.connect(lambda: self.done(3))
+        self.btn_del.clicked.connect(lambda: self.done(8))
+        self.btn_cancel.clicked.connect(lambda: self.reject())
+        
+        layout.addWidget(self.btn_view)
+        layout.addWidget(self.btn_edit)
+        layout.addWidget(self.btn_download)
+        layout.addWidget(self.btn_del)
+        layout.addWidget(self.btn_cancel)
 
 class PDFWorker(QThread):
     finished = Signal(str)
@@ -68,8 +147,8 @@ class VendorBillsPage(QWidget):
         
         # ── Table ────────────────────────────────────────────────
         self.table = QTableWidget()
-        self.table.setColumnCount(7)
-        self.table.setHorizontalHeaderLabels(["S.No", "Bill #", "Vendor", "Date", "Description", "Amount", "Actions"])
+        self.table.setColumnCount(6)
+        self.table.setHorizontalHeaderLabels(["S.No", "Bill #", "Vendor", "Date", "Description", "Amount"])
         
         self.table.setStyleSheet(f"""
             QTableWidget {{
@@ -112,13 +191,13 @@ class VendorBillsPage(QWidget):
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(6, QHeaderView.ResizeMode.Fixed)
-        self.table.setColumnWidth(6, 120)
         
-        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.table.customContextMenuRequested.connect(self._show_context_menu)
         
-        self.table.itemDoubleClicked.connect(self._on_row_double_clicked)
+        
+        
+        
+        
+        self.table.cellClicked.connect(self._on_row_clicked)
         
         root.addWidget(self.table)
 
@@ -143,42 +222,25 @@ class VendorBillsPage(QWidget):
             if item:
                 item.setText(str(row + 1))
 
-    def _on_row_double_clicked(self, item):
-        row = item.row()
-        id_item = self.table.item(row, 0)
-        if id_item:
-            bill_id = id_item.data(Qt.ItemDataRole.UserRole)
-            if bill_id:
-                self._on_view_pdf(bill_id)
 
-    def _create_action_widget(self, bill_id: int) -> QWidget:
-        action_widget = QWidget()
-        action_layout = QHBoxLayout(action_widget)
-        action_layout.setContentsMargins(4, 2, 4, 2)
-        action_layout.setSpacing(8)
+    def _on_row_clicked(self, row, col):
+        id_item = self.table.item(row, 0)
+        if not id_item: return
+        bill_id = id_item.data(Qt.ItemDataRole.UserRole)
+        bill_num = self.table.item(row, 1).text()
         
-        view_btn = QPushButton("📄")
-        view_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        view_btn.setStyleSheet("border: none; background: transparent; font-size: 14px;")
-        view_btn.setToolTip("Generate / View PDF")
-        view_btn.clicked.connect(lambda checked, b_id=bill_id: self._on_view_pdf(b_id))
+        dlg = RowActionDialog(self, f"Bill: {bill_num}")
+        res = dlg.exec()
         
-        edit_btn = QPushButton("✏️")
-        edit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        edit_btn.setStyleSheet("border: none; background: transparent; font-size: 14px;")
-        edit_btn.setToolTip("Edit Bill")
-        edit_btn.clicked.connect(lambda checked, b_id=bill_id: self._on_edit(b_id))
-        
-        del_btn = QPushButton("🗑️")
-        del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        del_btn.setStyleSheet("border: none; background: transparent; font-size: 14px;")
-        del_btn.setToolTip("Delete Bill")
-        del_btn.clicked.connect(lambda checked, b_id=bill_id: self._on_delete(b_id))
-        
-        action_layout.addWidget(view_btn)
-        action_layout.addWidget(edit_btn)
-        action_layout.addWidget(del_btn)
-        return action_widget
+        if res == 1:
+            self._on_view_pdf(bill_id)
+        elif res == 2:
+            self._on_edit(bill_id)
+        elif res == 3:
+            self._on_download(bill_id)
+        elif res == 8:
+            self._on_delete(bill_id)
+
 
     def _populate_row(self, row_idx: int, bill: dict):
         id_item = QTableWidgetItem(str(row_idx + 1))
@@ -192,31 +254,9 @@ class VendorBillsPage(QWidget):
         self.table.setItem(row_idx, 4, QTableWidgetItem(bill["description"]))
         self.table.setItem(row_idx, 5, QTableWidgetItem(f"{bill['amount']:.2f}"))
         
-        action_widget = self._create_action_widget(bill["id"])
-        self.table.setCellWidget(row_idx, 6, action_widget)
 
-    def _show_context_menu(self, pos):
-        item = self.table.itemAt(pos)
-        if not item: return
-        
-        row = item.row()
-        id_item = self.table.item(row, 0)
-        if not id_item: return
-        
-        bill_id = id_item.data(Qt.ItemDataRole.UserRole)
-        
-        menu = QMenu(self)
-        
-        view_action = menu.addAction("📄 View PDF")
-        view_action.triggered.connect(lambda: self._on_view_pdf(bill_id))
-        
-        edit_action = menu.addAction("✏️ Edit Bill")
-        edit_action.triggered.connect(lambda: self._on_edit(bill_id))
-        
-        del_action = menu.addAction("🗑️ Delete Bill")
-        del_action.triggered.connect(lambda: self._on_delete(bill_id))
-        
-        menu.exec(self.table.viewport().mapToGlobal(pos))
+
+
 
     def _on_add(self):
         if not self.active_company_id:
@@ -231,13 +271,6 @@ class VendorBillsPage(QWidget):
         dlg = CreateBillDialog(self, vendors=vendors)
         if dlg.exec():
             data = dlg.get_data()
-            if not data["vendor_id"]:
-                show_message(self, "error", "Validation Error", "Please select a vendor.")
-                return
-            if data["amount"] <= 0:
-                show_message(self, "error", "Validation Error", "Amount must be greater than 0.")
-                return
-                
             try:
                 res = VendorBillService.create_bill(
                     company_id=self.active_company_id,
@@ -249,6 +282,7 @@ class VendorBillsPage(QWidget):
                 )
                 show_message(self, "success", "Success", "Bill created successfully.")
                 self.refresh_data()
+                return True
                 if "id" in res:
                     self._auto_save_vendor_bill_pdf(res["id"])
             except Exception as e:
@@ -331,3 +365,17 @@ class VendorBillsPage(QWidget):
                     
         self._pdf_worker = BillPDFWorker(bill_id)
         self._pdf_worker.start()
+
+    def _on_download(self, bill_id: int):
+        from PySide6.QtWidgets import QFileDialog
+        import shutil
+        import os
+        try:
+            path = PDFGenerator.generate_vendor_bill_pdf(bill_id)
+            if os.path.exists(path):
+                save_path, _ = QFileDialog.getSaveFileName(self, "Save Bill", os.path.basename(path), "PDF Files (*.pdf)")
+                if save_path:
+                    shutil.copy2(path, save_path)
+                    show_message(self, "success", "Success", "Bill downloaded successfully.")
+        except Exception as e:
+            show_message(self, "error", "Error", str(e))

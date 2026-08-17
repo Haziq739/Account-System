@@ -1,6 +1,6 @@
 import os
 from PySide6.QtWidgets import (
-    QFrame, QHBoxLayout, QLabel, QComboBox, 
+    QFrame, QHBoxLayout, QLabel,
     QVBoxLayout, QWidget, QSizePolicy
 )
 from PySide6.QtCore import Qt, Signal
@@ -11,8 +11,71 @@ from database.session import SessionLocal
 from models.company import Company
 
 
+class CompanyWidget(QFrame):
+    """Clickable logo + text container for a single company."""
+    clicked = Signal(int)
+    
+    def __init__(self, comp_id: int, name: str, logo_path: str):
+        super().__init__()
+        self.comp_id = comp_id
+        self.setObjectName("comp_widget")
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setFixedHeight(56)
+        
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(12, 6, 12, 6)
+        layout.setSpacing(12)
+        
+        # Logo
+        logo_lbl = QLabel()
+        logo_lbl.setFixedSize(50, 44)
+        logo_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        if logo_path:
+            full_path = ASSETS_DIR / logo_path
+            pix = QPixmap(str(full_path))
+            if not pix.isNull():
+                logo_lbl.setPixmap(pix.scaled(50, 44, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+        layout.addWidget(logo_lbl)
+        
+        # Text
+        text_lbl = QLabel(name)
+        text_lbl.setWordWrap(True)
+        text_lbl.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: 600; font-size: 13px; background: transparent; border: none;")
+        layout.addWidget(text_lbl)
+        
+        # Default inactive state
+        self.set_active(False)
+        
+    def set_active(self, is_active: bool):
+        if is_active:
+            self.setStyleSheet(f"""
+                QFrame#comp_widget {{
+                    background-color: {COLORS['bg_input']};
+                    border: 2px solid {COLORS['primary']};
+                    border-radius: 8px;
+                }}
+            """)
+        else:
+            self.setStyleSheet(f"""
+                QFrame#comp_widget {{
+                    background-color: transparent;
+                    border: 2px solid transparent;
+                    border-radius: 8px;
+                }}
+                QFrame#comp_widget:hover {{
+                    background-color: {COLORS['bg_card']};
+                    border: 2px solid {COLORS['border_card']};
+                }}
+            """)
+            
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.clicked.emit(self.comp_id)
+        super().mousePressEvent(event)
+
+
 class Header(QFrame):
-    """Top header bar containing active company selection and user profile."""
+    """Top header bar containing horizontal company switcher and user profile."""
     company_changed = Signal(int)  # Emits company ID when changed
 
     def __init__(self, current_user: dict):
@@ -26,36 +89,16 @@ class Header(QFrame):
                 background-color: {COLORS['bg_card']};
                 border-bottom: 1px solid {COLORS['border_card']};
             }}
-            QComboBox {{
-                background-color: {COLORS['bg_input']};
-                border: 1px solid {COLORS['border']};
-                border-radius: 6px;
-                padding: 6px 10px;
-                font-size: 13px;
-                color: {COLORS['text_primary']};
-                min-width: 240px;
-            }}
-            QComboBox:drop-down {{
-                border: none;
-                width: 24px;
-            }}
-            QComboBox QAbstractItemView {{
-                background-color: {COLORS['bg_card']};
-                selection-background-color: {COLORS['bg_input']};
-                selection-color: {COLORS['primary']};
-                border: 1px solid {COLORS['border_card']};
-                outline: none;
-            }}
         """)
         
         self.companies = []
+        self.company_widgets = {}
+        
         self._load_companies()
         self._build()
-        self._update_logo()
 
     def _load_companies(self):
         with SessionLocal() as s:
-            # Load all companies into memory
             rows = s.query(Company).all()
             for r in rows:
                 self.companies.append({
@@ -67,32 +110,31 @@ class Header(QFrame):
     def _build(self):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(24, 0, 24, 0)
-        layout.setSpacing(16)
+        layout.setSpacing(24)
 
-        # ── Left: Logo ──────────────────────────────────────────────────
-        self.logo_lbl = QLabel()
-        self.logo_lbl.setFixedSize(60, 44)
-        self.logo_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.logo_lbl.setStyleSheet("background: transparent;")
-        layout.addWidget(self.logo_lbl)
+        # ── Left/Middle: Horizontal Company Switcher ────────────────────
+        comps_layout = QHBoxLayout()
+        comps_layout.setSpacing(24)
         
-        # ── Middle: Company Dropdown ────────────────────────────────────
-        col = QVBoxLayout()
-        col.setAlignment(Qt.AlignmentFlag.AlignVCenter)
-        col.setSpacing(2)
+        # Determine explicit ordering: RN Scanner first
+        rn_comp = next((c for c in self.companies if "RN Scanner" in c["name"]), None)
+        k_comp = next((c for c in self.companies if "K Dynamics" in c["name"]), None)
         
-        lbl = QLabel("Active Company:")
-        lbl.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; background: transparent;")
-        col.addWidget(lbl)
-        
-        self.company_combo = QComboBox()
-        for comp in self.companies:
-            self.company_combo.addItem(comp["name"], userData=comp)
+        sorted_comps = []
+        if rn_comp: sorted_comps.append(rn_comp)
+        if k_comp: sorted_comps.append(k_comp)
+        for c in self.companies:
+            if c not in sorted_comps:
+                sorted_comps.append(c)
+
+        # Build custom clickable widgets
+        for comp in sorted_comps:
+            cw = CompanyWidget(comp["id"], comp["name"], comp["logo_path"])
+            cw.clicked.connect(self._on_company_clicked)
+            comps_layout.addWidget(cw)
+            self.company_widgets[comp["id"]] = cw
             
-        self.company_combo.currentIndexChanged.connect(self._on_combo_change)
-        col.addWidget(self.company_combo)
-        
-        layout.addLayout(col)
+        layout.addLayout(comps_layout)
         layout.addStretch()
 
         # ── Right: User Info ────────────────────────────────────────────
@@ -112,24 +154,13 @@ class Header(QFrame):
         
         layout.addLayout(user_col)
 
-    def _on_combo_change(self, index: int):
-        self._update_logo()
-        comp = self.company_combo.currentData()
-        if comp:
-            self.company_changed.emit(comp["id"])
+    def _on_company_clicked(self, comp_id: int):
+        """User clicked a company logo/text."""
+        self.set_active_company(comp_id)
+        self.company_changed.emit(comp_id)
 
-    def _update_logo(self):
-        comp = self.company_combo.currentData()
-        if not comp or not comp.get("logo_path"):
-            self.logo_lbl.setText("🏢")
-            self.logo_lbl.setStyleSheet("font-size: 24px; background: transparent;")
-            return
-            
-        logo_file = ASSETS_DIR / comp["logo_path"]
-        pix = QPixmap(str(logo_file))
-        if not pix.isNull():
-            self.logo_lbl.setPixmap(pix.scaled(60, 44, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
-            self.logo_lbl.setStyleSheet("background: transparent;")
-        else:
-            self.logo_lbl.setText("🏢")
-            self.logo_lbl.setStyleSheet("font-size: 24px; background: transparent;")
+    def set_active_company(self, comp_id: int):
+        """Visually updates the active company without emitting signals."""
+        for cid, widget in self.company_widgets.items():
+            widget.set_active(cid == comp_id)
+

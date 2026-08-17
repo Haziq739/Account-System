@@ -175,14 +175,15 @@ class PDFGenerator:
             
             # Summary Table
             summary_data = [
-                ["Total Income", "Total Expense", "Closing Balance"],
+                ["Opening Balance", "Total Income", "Total Expense", "Closing Balance"],
                 [
+                    f"{data_dict.get('opening_balance', 0.0):,.2f}",
                     f"{data_dict['total_income']:,.2f}",
                     f"{data_dict['total_expense']:,.2f}",
                     f"{data_dict['balance']:,.2f}"
                 ]
             ]
-            t_summary = Table(summary_data, colWidths=[200, 200, 200])
+            t_summary = Table(summary_data, colWidths=[160, 160, 160, 160])
             t_summary.setStyle(TableStyle([
                 ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#334155")),
                 ('TEXTCOLOR', (0,0), (-1,0), colors.white),
@@ -198,7 +199,13 @@ class PDFGenerator:
             table_data = [["Time", "Type", "Description", "Customer", "Ref No.", "Income", "Expense", "Balance"]]
             
             for t in data_dict['transactions']:
-                time_str = t['timestamp'].strftime("%I:%M %p") if t['timestamp'] else ""
+                time_str = ""
+                if t['timestamp']:
+                    from datetime import timezone
+                    dt = t['timestamp']
+                    if dt.tzinfo is None:
+                        dt = dt.replace(tzinfo=timezone.utc)
+                    time_str = dt.astimezone().strftime("%I:%M %p")
                 
                 desc_para = Paragraph(t['description'], styles['Normal'])
                 cust_para = Paragraph(t['customer_or_title'], styles['Normal'])

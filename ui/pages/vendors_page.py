@@ -1,4 +1,6 @@
 from PySide6.QtWidgets import (
+    QGridLayout,
+    QSizePolicy,
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
     QLineEdit, QPushButton, QTableWidget, QTableWidgetItem,
     QHeaderView, QFileDialog, QMessageBox, QDialog, QAbstractItemView
@@ -22,7 +24,7 @@ class LoadingDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setFixedSize(300, 100)
-        self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | Qt.WindowType.WindowTitleHint)
+        self.setWindowFlags(Qt.WindowType.Dialog)
         self.setStyleSheet(f"QDialog {{ background-color: {COLORS['bg_card']}; border-radius: 8px; }}")
         
         layout = QVBoxLayout(self)
@@ -30,6 +32,49 @@ class LoadingDialog(QDialog):
         lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl.setStyleSheet(f"color: {COLORS['text_primary']}; font-size: 16px; font-weight: 600;")
         layout.addWidget(lbl)
+
+class RowActionDialog(QDialog):
+    def __init__(self, parent, title: str):
+        super().__init__(parent)
+        self.setWindowTitle("Action")
+        self.setFixedSize(320, 160)
+        self.setWindowFlags(Qt.WindowType.Dialog)
+        self.setStyleSheet(f"QDialog {{ background-color: {COLORS['bg_card']}; border-radius: 8px; border: 1px solid {COLORS['border_card']}; }}")
+        
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 24, 24, 24)
+        
+        lbl = QLabel(title)
+        lbl.setStyleSheet(f"color: {COLORS['text_primary']}; font-size: 16px; font-weight: 600;")
+        lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(lbl)
+        
+        layout.addSpacing(20)
+        
+        btn_layout = QGridLayout()
+        btn_layout.setColumnStretch(0, 1)
+        btn_layout.setColumnStretch(1, 1)
+        btn_layout.setColumnStretch(2, 1)
+        
+        self.edit_btn = _btn("Edit", primary=True)
+        self.del_btn = QPushButton("Delete")
+        self.del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.del_btn.setStyleSheet(f"background-color: #FEE2E2; color: #EF4444; border: 1px solid #FCA5A5; padding: 8px 16px; border-radius: 6px; font-weight: 600;")
+        self.cancel_btn = _btn("Cancel")
+        
+        self.edit_btn.setFixedSize(84, 38)
+        self.del_btn.setFixedSize(84, 38)
+        self.cancel_btn.setFixedSize(84, 38)
+        
+        btn_layout.addWidget(self.edit_btn, 0, 0)
+        btn_layout.addWidget(self.del_btn, 0, 1)
+        btn_layout.addWidget(self.cancel_btn, 0, 2)
+        
+        layout.addLayout(btn_layout)
+        
+        self.cancel_btn.clicked.connect(self.reject)
+        self.edit_btn.clicked.connect(lambda: self.done(1))
+        self.del_btn.clicked.connect(lambda: self.done(2))
 
 class VendorCSVImportWorker(QThread):
     """Background worker thread to run CSV import without freezing the UI."""
@@ -108,8 +153,8 @@ class VendorsPage(QWidget):
         
         # ── Table ────────────────────────────────────────────────
         self.table = QTableWidget()
-        self.table.setColumnCount(6)
-        self.table.setHorizontalHeaderLabels(["S.No", "Name", "Phone", "Address", "Date Added", "Actions"])
+        self.table.setColumnCount(5)
+        self.table.setHorizontalHeaderLabels(["S.No", "Name", "Phone", "Address", "Date Added"])
         
         self.table.setStyleSheet(f"""
             QTableWidget {{
@@ -144,6 +189,7 @@ class VendorsPage(QWidget):
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setShowGrid(False)
         self.table.verticalHeader().setVisible(False)
+        self.table.cellClicked.connect(self._on_row_clicked)
         
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
@@ -151,8 +197,6 @@ class VendorsPage(QWidget):
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(5, QHeaderView.ResizeMode.Fixed)
-        self.table.setColumnWidth(5, 140)
         
         root.addWidget(self.table)
 
@@ -178,27 +222,18 @@ class VendorsPage(QWidget):
             if item:
                 item.setText(str(row + 1))
 
-    def _create_action_widget(self, vid: int) -> QWidget:
-        action_widget = QWidget()
-        action_layout = QHBoxLayout(action_widget)
-        action_layout.setContentsMargins(4, 2, 4, 2)
-        action_layout.setSpacing(8)
+    def _on_row_clicked(self, row, col):
+        item = self.table.item(row, 0)
+        if not item: return
+        vendor_id = item.data(Qt.ItemDataRole.UserRole)
+        vendor_name = self.table.item(row, 1).text()
         
-        edit_btn = QPushButton("✏️")
-        edit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        edit_btn.setStyleSheet("border: none; background: transparent; font-size: 14px;")
-        edit_btn.setToolTip("Edit Vendor")
-        edit_btn.clicked.connect(lambda checked, v_id=vid: self._on_edit(v_id))
-        
-        del_btn = QPushButton("🗑️")
-        del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        del_btn.setStyleSheet("border: none; background: transparent; font-size: 14px;")
-        del_btn.setToolTip("Delete Vendor")
-        del_btn.clicked.connect(lambda checked, v_id=vid: self._on_delete(v_id))
-        
-        action_layout.addWidget(edit_btn)
-        action_layout.addWidget(del_btn)
-        return action_widget
+        dlg = RowActionDialog(self, f"Vendor: {vendor_name}")
+        result = dlg.exec()
+        if result == 1:
+            self._on_edit(vendor_id)
+        elif result == 2:
+            self._on_delete(vendor_id)
 
     def _populate_row(self, row_idx: int, v: dict):
         # S.No (Display Row Index + 1)
@@ -220,10 +255,6 @@ class VendorsPage(QWidget):
         # Date
         dt_str = v["created_at"].strftime("%Y-%m-%d") if v["created_at"] else ""
         self.table.setItem(row_idx, 4, QTableWidgetItem(dt_str))
-        
-        # Actions
-        action_widget = self._create_action_widget(v["id"])
-        self.table.setCellWidget(row_idx, 5, action_widget)
 
     def _find_row_by_id(self, vendor_id: int) -> int:
         for row in range(self.table.rowCount()):
@@ -236,8 +267,8 @@ class VendorsPage(QWidget):
         dlg = VendorFormDialog(self)
         if dlg.exec():
             data = dlg.get_data()
-            if not data["name"] or not data["phone"]:
-                show_message(self, "error", "Validation Error", "Vendor Name and Phone Number are required.")
+            if not data["name"]:
+                show_message(self, "error", "Validation Error", "Vendor Name is required.")
                 return
             
             try:
@@ -252,9 +283,12 @@ class VendorsPage(QWidget):
                 new_v["created_at"] = datetime.now() 
                 self.vendors.append(new_v)
                 self._populate_row(row_idx, new_v)
+                return True
                 
             except ValueError as e:
-                show_message(self, "error", "Error", str(e))
+                from ui.auth.setup_window import handle_duplicate_error
+                if not handle_duplicate_error(self, e):
+                    show_message(self, "error", "Error", str(e))
 
     def _on_edit(self, vendor_id: int):
         vend = next((v for v in self.vendors if v["id"] == vendor_id), None)
@@ -264,8 +298,8 @@ class VendorsPage(QWidget):
         dlg = VendorFormDialog(self, vendor_data=vend)
         if dlg.exec():
             data = dlg.get_data()
-            if not data["name"] or not data["phone"]:
-                show_message(self, "error", "Validation Error", "Vendor Name and Phone Number are required.")
+            if not data["name"]:
+                show_message(self, "error", "Validation Error", "Vendor Name is required.")
                 return
             
             try:
@@ -282,7 +316,9 @@ class VendorsPage(QWidget):
                 else:
                     show_message(self, "error", "Error", "Failed to update vendor.")
             except ValueError as e:
-                show_message(self, "error", "Error", str(e))
+                from ui.auth.setup_window import handle_duplicate_error
+                if not handle_duplicate_error(self, e):
+                    show_message(self, "error", "Error", str(e))
 
     def _on_delete(self, vendor_id: int):
         reply = QMessageBox.question(

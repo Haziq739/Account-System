@@ -1,7 +1,9 @@
 from PySide6.QtWidgets import (
+    QGridLayout,
+    QSizePolicy,
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
     QLineEdit, QPushButton, QTableWidget, QTableWidgetItem,
-    QHeaderView, QMessageBox, QAbstractItemView, QMenu
+    QHeaderView, QMessageBox, QAbstractItemView, QDialog
 )
 from PySide6.QtCore import Qt, QTimer, QThread, Signal
 import os, platform, subprocess
@@ -10,6 +12,91 @@ from ui.auth.setup_window import show_message
 from services.quotation_service import QuotationService
 from services.pdf_generator import PDFGenerator
 from ui.components.create_quotation_dialog import CreateQuotationDialog
+
+
+class RowActionDialog(QDialog):
+    def __init__(self, parent=None, title_text="Action"):
+        super().__init__(parent)
+        self.setWindowTitle("Action")
+        self.setFixedWidth(320)
+        self.setStyleSheet(f"""
+            QDialog {{ 
+                background-color: {COLORS['bg_card']}; 
+                border-radius: 8px; 
+                border: 2px solid {COLORS['primary']}; 
+            }}
+            QPushButton, QPushButton#outline_btn, QPushButton#primary_btn {{
+                text-align: center;
+                padding: 12px 16px;
+                border: 1px solid {COLORS['border']};
+                border-radius: 6px;
+                background-color: {COLORS['bg_card']};
+                color: {COLORS['text_primary']};
+                font-size: 14px;
+                font-weight: 500;
+                min-height: 20px;
+            }}
+            QPushButton:hover, QPushButton#outline_btn:hover, QPushButton#primary_btn:hover {{
+                background-color: #EFF6FF;
+                border: 1px solid {COLORS['primary']};
+                color: {COLORS['primary']};
+            }}
+        """)
+        self.setWindowFlags(Qt.WindowType.Dialog)
+        
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(12)
+        
+        title_lbl = QLabel(title_text)
+        title_lbl.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold; font-size: 16px;")
+        title_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(title_lbl)
+        
+        self.btn_view = _btn("View Quotation")
+        self.btn_edit = _btn("Edit Quotation")
+        self.btn_pdf = _btn("Generate / View PDF")
+        self.btn_down = _btn("Download Quotation")
+        self.btn_print = _btn("Print Quotation")
+        self.btn_convert = _btn("Convert to Invoice", primary=True)
+        self.btn_del = _btn("Delete Quotation")
+        self.btn_del.setStyleSheet("""
+            QPushButton, QPushButton#outline_btn {
+                background-color: #FEF2F2; 
+                color: #DC2626; 
+                border: 1px solid #FECACA; 
+                text-align: center;
+                padding: 12px 16px;
+                border-radius: 6px;
+                font-size: 14px;
+                font-weight: 500;
+                min-height: 20px;
+            }
+            QPushButton:hover, QPushButton#outline_btn:hover {
+                background-color: #FEE2E2;
+                border: 1px solid #EF4444;
+                color: #B91C1C;
+            }
+        """)
+        self.btn_cancel = _btn("Cancel")
+        
+        self.btn_view.clicked.connect(lambda: self.done(1))
+        self.btn_edit.clicked.connect(lambda: self.done(2))
+        self.btn_pdf.clicked.connect(lambda: self.done(1)) # Same as view
+        self.btn_down.clicked.connect(lambda: self.done(4))
+        self.btn_print.clicked.connect(lambda: self.done(5))
+        self.btn_convert.clicked.connect(lambda: self.done(6))
+        self.btn_del.clicked.connect(lambda: self.done(8))
+        self.btn_cancel.clicked.connect(lambda: self.reject())
+        
+        layout.addWidget(self.btn_view)
+        layout.addWidget(self.btn_edit)
+        layout.addWidget(self.btn_pdf)
+        layout.addWidget(self.btn_down)
+        layout.addWidget(self.btn_print)
+        layout.addWidget(self.btn_convert)
+        layout.addWidget(self.btn_del)
+        layout.addWidget(self.btn_cancel)
 
 class PDFWorker(QThread):
     finished = Signal(str)
@@ -68,8 +155,8 @@ class QuotationsPage(QWidget):
         
         # ── Table ────────────────────────────────────────────────
         self.table = QTableWidget()
-        self.table.setColumnCount(7)
-        self.table.setHorizontalHeaderLabels(["S.No", "Quotation #", "Customer", "Date", "Total", "Status", "Actions"])
+        self.table.setColumnCount(6)
+        self.table.setHorizontalHeaderLabels(["S.No", "Quotation #", "Customer", "Date", "Total", "Status"])
         
         self.table.setStyleSheet(f"""
             QTableWidget {{
@@ -112,13 +199,13 @@ class QuotationsPage(QWidget):
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(6, QHeaderView.ResizeMode.Fixed)
-        self.table.setColumnWidth(6, 150)
         
-        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.table.customContextMenuRequested.connect(self._show_context_menu)
         
-        self.table.itemDoubleClicked.connect(self._on_row_double_clicked)
+        
+        
+        
+        
+        self.table.cellClicked.connect(self._on_row_clicked)
         
         root.addWidget(self.table)
 
@@ -143,56 +230,29 @@ class QuotationsPage(QWidget):
             if item:
                 item.setText(str(row + 1))
 
-    def _on_row_double_clicked(self, item):
-        row = item.row()
-        id_item = self.table.item(row, 0)
-        if id_item:
-            inv_id = id_item.data(Qt.ItemDataRole.UserRole)
-            if inv_id:
-                self._on_view_pdf(inv_id)
 
-    def _create_action_widget(self, inv_id: int) -> QWidget:
-        action_widget = QWidget()
-        action_layout = QHBoxLayout(action_widget)
-        action_layout.setContentsMargins(4, 2, 4, 2)
-        action_layout.setSpacing(8)
+    def _on_row_clicked(self, row, col):
+        id_item = self.table.item(row, 0)
+        if not id_item: return
+        inv_id = id_item.data(Qt.ItemDataRole.UserRole)
+        inv_num = self.table.item(row, 1).text()
         
-        view_btn = QPushButton("📄")
-        view_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        view_btn.setStyleSheet("border: none; background: transparent; font-size: 14px;")
-        view_btn.setToolTip("Generate / View PDF")
-        view_btn.clicked.connect(lambda checked, i_id=inv_id: self._on_view_pdf(i_id))
+        dlg = RowActionDialog(self, f"Quotation: {inv_num}")
+        res = dlg.exec()
         
-        down_btn = QPushButton("⬇️")
-        down_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        down_btn.setStyleSheet("border: none; background: transparent; font-size: 14px;")
-        down_btn.setToolTip("Download Quotation")
-        down_btn.clicked.connect(lambda checked, i_id=inv_id: self._on_download(i_id))
-        
-        print_btn = QPushButton("🖨️")
-        print_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        print_btn.setStyleSheet("border: none; background: transparent; font-size: 14px;")
-        print_btn.setToolTip("Print Quotation")
-        print_btn.clicked.connect(lambda checked, i_id=inv_id: self._on_print(i_id))
-        
-        del_btn = QPushButton("🗑️")
-        del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        del_btn.setStyleSheet("border: none; background: transparent; font-size: 14px;")
-        del_btn.setToolTip("Delete Quotation")
-        del_btn.clicked.connect(lambda checked, i_id=inv_id: self._on_delete(i_id))
-        
-        convert_btn = QPushButton("🔄")
-        convert_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        convert_btn.setStyleSheet("border: none; background: transparent; font-size: 14px;")
-        convert_btn.setToolTip("Convert to Invoice")
-        convert_btn.clicked.connect(lambda checked, i_id=inv_id: self._on_convert(i_id))
-        
-        action_layout.addWidget(view_btn)
-        action_layout.addWidget(down_btn)
-        action_layout.addWidget(print_btn)
-        action_layout.addWidget(convert_btn)
-        action_layout.addWidget(del_btn)
-        return action_widget
+        if res == 1:
+            self._on_view_pdf(inv_id)
+        elif res == 2:
+            self._on_edit(inv_id, row)
+        elif res == 4:
+            self._on_download(inv_id)
+        elif res == 5:
+            self._on_print(inv_id)
+        elif res == 6:
+            self._on_convert(inv_id)
+        elif res == 8:
+            self._on_delete(inv_id)
+
 
     def _populate_row(self, row_idx: int, inv: dict):
         # S.No (Display Row Index + 1)
@@ -215,31 +275,9 @@ class QuotationsPage(QWidget):
             status_item.setForeground(Qt.GlobalColor.darkRed)
         self.table.setItem(row_idx, 5, status_item)
         
-        action_widget = self._create_action_widget(inv["id"])
-        self.table.setCellWidget(row_idx, 6, action_widget)
 
-    def _show_context_menu(self, pos):
-        item = self.table.itemAt(pos)
-        if not item: return
-        
-        row = item.row()
-        inv_id_item = self.table.item(row, 0)
-        if not inv_id_item: return
-        
-        inv_id = inv_id_item.data(Qt.ItemDataRole.UserRole)
-        
-        menu = QMenu(self)
-        
-        view_action = menu.addAction("📄 View Quotation")
-        view_action.triggered.connect(lambda: self._on_view_pdf(inv_id))
-        
-        edit_action = menu.addAction("✏️ Edit Quotation")
-        edit_action.triggered.connect(lambda: self._on_edit(inv_id, row))
-        
-        convert_action = menu.addAction("🔄 Convert to Invoice")
-        convert_action.triggered.connect(lambda: self._on_convert(inv_id))
-        
-        menu.exec(self.table.viewport().mapToGlobal(pos))
+
+
 
 
 

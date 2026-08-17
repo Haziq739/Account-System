@@ -20,6 +20,8 @@ class Company(Base, TimestampMixin):
     invoices = relationship("Invoice", back_populates="company", cascade="all, delete-orphan")
     quotations = relationship("Quotation", back_populates="company", cascade="all, delete-orphan")
     users = relationship("User", back_populates="company")
+    customers = relationship("Customer", back_populates="company", cascade="all, delete-orphan")
+    services = relationship("Service", back_populates="company", cascade="all, delete-orphan")
     payments = relationship("Payment", back_populates="company", cascade="all, delete-orphan")
     ledger_entries = relationship("CustomerLedger", back_populates="company", cascade="all, delete-orphan")
     expenses = relationship("Expense", back_populates="company", cascade="all, delete-orphan")

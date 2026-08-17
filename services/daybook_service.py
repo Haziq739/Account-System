@@ -13,15 +13,33 @@ class DayBookService:
     def get_daybook_transactions(company_id: int, target_date: date) -> Dict[str, Any]:
         """
         Fetches all incomes (payments) and expenses for a given day and company.
-        Combines them into a chronological list with running balance.
+        Combines them into a chronological list with running balance starting from the previous closing balance.
         """
         with SessionLocal() as s:
             from sqlalchemy.orm import joinedload
+            from sqlalchemy import func
             from datetime import timedelta
             
             next_date = target_date + timedelta(days=1)
             
-            # Fetch Income (Payments)
+            # Calculate Opening Balance (Previous Closing Balance)
+            hist_income_query = s.query(func.sum(Payment.amount)).filter(
+                Payment.company_id == company_id,
+                Payment.payment_date < target_date,
+                Payment.is_deleted == False
+            ).scalar()
+            hist_income = float(hist_income_query or 0.0)
+            
+            hist_expense_query = s.query(func.sum(Expense.amount)).filter(
+                Expense.company_id == company_id,
+                Expense.expense_date < target_date,
+                Expense.is_deleted == False
+            ).scalar()
+            hist_expense = float(hist_expense_query or 0.0)
+            
+            opening_balance = hist_income - hist_expense
+            
+            # Fetch Income (Payments) for the day
             payments = s.query(Payment).options(
                 joinedload(Payment.customer),
                 joinedload(Payment.invoice)
@@ -32,7 +50,7 @@ class DayBookService:
                 Payment.is_deleted == False
             ).all()
             
-            # Fetch Expenses
+            # Fetch Expenses for the day
             expenses = s.query(Expense).options(
                 joinedload(Expense.customer),
                 joinedload(Expense.vendor),
@@ -99,17 +117,20 @@ class DayBookService:
             # Sort chronologically
             transactions.sort(key=lambda x: x["sort_key"])
             
-            running_balance = 0.0
+            running_balance = opening_balance
             for t in transactions:
                 running_balance += t["income"]
                 running_balance -= t["expense"]
                 t["running_balance"] = running_balance
                 
+            closing_balance = opening_balance + total_income - total_expense
+                
             return {
                 "transactions": transactions,
+                "opening_balance": opening_balance,
                 "total_income": total_income,
                 "total_expense": total_expense,
-                "balance": total_income - total_expense
+                "balance": closing_balance
             }
 
     @staticmethod
@@ -152,3 +173,63 @@ class DayBookService:
                 "title": new_exp.title,
                 "amount": float(new_exp.amount)
             }
+
+
+    @staticmethod
+    def get_expense(expense_id: int) -> dict:
+        with SessionLocal() as s:
+            e = s.query(Expense).filter(Expense.id == expense_id).first()
+            if not e: return None
+            return {
+                "id": e.id,
+                "title": e.title,
+                "amount": float(e.amount),
+                "expense_date": e.expense_date,
+                "notes": e.notes or "",
+                "customer_id": e.customer_id,
+                "vendor_id": e.vendor_id,
+                "employee_id": e.employee_id
+            }
+
+    @staticmethod
+    def update_expense(expense_id: int, title: str, amount: float, expense_date, notes: str, user_id: int = None, customer_id: int = None, vendor_id: int = None, employee_id: int = None):
+        from models.employee_advance import EmployeeAdvance
+        with SessionLocal() as s:
+            e = s.query(Expense).filter(Expense.id == expense_id).first()
+            if not e: raise Exception("Expense not found")
+            
+            e.title = title
+            e.amount = amount
+            e.expense_date = expense_date
+            e.notes = notes
+            e.customer_id = customer_id
+            e.vendor_id = vendor_id
+            e.employee_id = employee_id
+            
+            adv = s.query(EmployeeAdvance).filter(EmployeeAdvance.expense_id == expense_id).first()
+            if employee_id:
+                month_str = expense_date.strftime("%B %Y")
+                if adv:
+                    adv.employee_id = employee_id
+                    adv.amount = amount
+                    adv.advance_date = expense_date
+                    adv.month = month_str
+                    adv.description = f"{title} - {notes}" if notes else title
+                else:
+                    new_adv = EmployeeAdvance(
+                        company_id=e.company_id,
+                        employee_id=employee_id,
+                        expense_id=e.id,
+                        amount=amount,
+                        advance_date=expense_date,
+                        month=month_str,
+                        description=f"{title} - {notes}" if notes else title
+                    )
+                    s.add(new_adv)
+            else:
+                if adv:
+                    s.delete(adv)
+                    
+            s.commit()
+            HistoryService.log_action("update", "Expense", e.id, f"Updated expense '{title}' to {amount}", user_id)
+            return True
