@@ -1,6 +1,26 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+from PyInstaller.utils.hooks import collect_submodules
+
 block_cipher = None
+
+all_hidden_imports = (
+    collect_submodules('ui') +
+    collect_submodules('services') +
+    collect_submodules('models') +
+    collect_submodules('database') +
+    collect_submodules('utils') +
+    collect_submodules('config') +
+    [
+        'sqlalchemy.sql.default_comparator',
+        'sqlalchemy.ext.baked',
+        'sqlalchemy.orm.strategy_options',
+        'PySide6.QtCore',
+        'PySide6.QtGui',
+        'PySide6.QtWidgets',
+        'reportlab'
+    ]
+)
 
 a = Analysis(
     ['main.py'],
@@ -9,14 +29,7 @@ a = Analysis(
     datas=[
         ('assets/*', 'assets')
     ],
-    hiddenimports=[
-        'sqlalchemy.sql.default_comparator',
-        'sqlalchemy.ext.baked',
-        'sqlalchemy.orm.strategy_options',
-        'PySide6.QtCore',
-        'PySide6.QtGui',
-        'PySide6.QtWidgets'
-    ],
+    hiddenimports=all_hidden_imports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
