@@ -196,16 +196,21 @@ class DayBookPage(QWidget):
         self._populate_table()
         
     def _populate_table(self):
+        self.table.setUpdatesEnabled(False)
+        self.table.setSortingEnabled(False)
         self.table.setRowCount(0)
-        if not self.data: return
+        if not self.data: 
+            self.table.setUpdatesEnabled(True)
+            self.table.setSortingEnabled(True)
+            return
         
+        from datetime import timezone
         for t in self.data['transactions']:
             row = self.table.rowCount()
             self.table.insertRow(row)
             
             time_str = ""
             if t['timestamp']:
-                from datetime import timezone
                 # Convert from UTC to local system timezone (e.g. PKT)
                 dt = t['timestamp']
                 if dt.tzinfo is None:
@@ -242,6 +247,9 @@ class DayBookPage(QWidget):
             bal_item = QTableWidgetItem(f"{t['running_balance']:,.2f}")
             bal_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             self.table.setItem(row, 7, bal_item)
+
+        self.table.setSortingEnabled(True)
+        self.table.setUpdatesEnabled(True)
 
     def _on_row_clicked(self, row, col):
         t_id = self.table.item(row, 0).data(Qt.ItemDataRole.UserRole)

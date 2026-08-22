@@ -25,7 +25,7 @@ class LoadingDialog(QDialog):
         self.setWindowTitle(title)
         self.setFixedSize(300, 100)
         self.setWindowFlags(Qt.WindowType.Dialog)
-        self.setStyleSheet(f"QDialog {{ background-color: {COLORS['bg_card']}; border-radius: 8px; }}")
+        self.setStyleSheet(f"QDialog {{ background-color: {COLORS['bg_card']}; border-radius: 8px; border: 2px solid {COLORS['primary']}; }}")
         
         layout = QVBoxLayout(self)
         lbl = QLabel(title)
@@ -39,7 +39,7 @@ class RowActionDialog(QDialog):
         self.setWindowTitle("Action")
         self.setFixedSize(320, 160)
         self.setWindowFlags(Qt.WindowType.Dialog)
-        self.setStyleSheet(f"QDialog {{ background-color: {COLORS['bg_card']}; border-radius: 8px; border: 1px solid {COLORS['border_card']}; }}")
+        self.setStyleSheet(f"QDialog {{ background-color: {COLORS['bg_card']}; border-radius: 8px; border: 2px solid {COLORS['primary']}; }}")
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
@@ -180,8 +180,8 @@ class VendorsPage(QWidget):
                 border-bottom: 1px solid {COLORS['border']};
             }}
             QTableWidget::item:selected {{
-                background-color: #E2E8F0;
-                color: {COLORS['text_primary']};
+                background-color: {COLORS['primary']};
+                color: white;
             }}
         """)
         self.table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -208,12 +208,14 @@ class VendorsPage(QWidget):
         self.vendors = VendorService.get_vendors(self.current_company["id"], term)
         
         self.table.setUpdatesEnabled(False)
+        self.table.setSortingEnabled(False)
         self.table.setRowCount(0)
         
         for i, v in enumerate(self.vendors):
             self.table.insertRow(i)
             self._populate_row(i, v)
             
+        self.table.setSortingEnabled(True)
         self.table.setUpdatesEnabled(True)
         
     def _update_serial_numbers(self):

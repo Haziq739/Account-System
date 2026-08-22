@@ -41,6 +41,8 @@ class RowActionDialog(QDialog):
         self.setStyleSheet(f"""
             QDialog {{ 
                 background-color: {COLORS['bg_card']}; 
+                border-radius: 8px; 
+                border: 2px solid {COLORS['primary']}; 
             }}
             QPushButton, QPushButton#outline_btn, QPushButton#primary_btn {{
                 text-align: center;
@@ -216,8 +218,8 @@ class EmployeesPage(QWidget):
                 border-bottom: 1px solid {COLORS['border']};
             }}
             QTableWidget::item:selected {{
-                background-color: #E2E8F0;
-                color: {COLORS['text_primary']};
+                background-color: {COLORS['primary']};
+                color: white;
             }}
         """)
         self.table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -298,12 +300,14 @@ class EmployeesPage(QWidget):
             self.employees = []
         
         self.table.setUpdatesEnabled(False)
+        self.table.setSortingEnabled(False)
         self.table.setRowCount(0)
         
         for i, e in enumerate(self.employees):
             self.table.insertRow(i)
             self._populate_row(i, e)
             
+        self.table.setSortingEnabled(True)
         self.table.setUpdatesEnabled(True)
         
     def _update_serial_numbers(self):

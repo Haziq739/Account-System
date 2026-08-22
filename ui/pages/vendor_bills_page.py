@@ -174,8 +174,8 @@ class VendorBillsPage(QWidget):
                 border-bottom: 1px solid {COLORS['border']};
             }}
             QTableWidget::item:selected {{
-                background-color: #E2E8F0;
-                color: {COLORS['text_primary']};
+                background-color: {COLORS['primary']};
+                color: white;
             }}
         """)
         self.table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -208,12 +208,14 @@ class VendorBillsPage(QWidget):
         self.bills = VendorBillService.get_bills(self.active_company_id)
         
         self.table.setUpdatesEnabled(False)
+        self.table.setSortingEnabled(False)
         self.table.setRowCount(0)
         
         for i, bill in enumerate(self.bills):
             self.table.insertRow(i)
             self._populate_row(i, bill)
             
+        self.table.setSortingEnabled(True)
         self.table.setUpdatesEnabled(True)
         
     def _update_serial_numbers(self):

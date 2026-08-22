@@ -5,7 +5,7 @@ from ui.design_system import COLORS
 
 class SidebarBtn(QPushButton):
     """Custom sidebar navigation button."""
-    def __init__(self, icon: str, text: str, page_name: str):
+    def __init__(self, icon: str, text: str, page_name: str, is_subitem: bool = False):
         super().__init__(f"{icon}   {text}")
         self.page_name = page_name
         self.setCheckable(True)
@@ -17,8 +17,8 @@ class SidebarBtn(QPushButton):
                 background-color: transparent;
                 color: {COLORS['text_secondary']};
                 border: none;
-                border-radius: 8px;
-                padding-left: 16px;
+                border-radius: 0px;
+                padding-left: {32 if is_subitem else 16}px;
                 text-align: left;
                 font-size: 13px;
                 font-weight: 500;
@@ -56,7 +56,7 @@ class CollapsibleSection(QWidget):
                 background-color: transparent;
                 color: {COLORS['text_secondary']};
                 border: none;
-                border-radius: 8px;
+                border-radius: 0px;
                 padding-left: 16px;
                 text-align: left;
                 font-size: 13px;
@@ -75,11 +75,11 @@ class CollapsibleSection(QWidget):
         
         self.content_widget = QWidget()
         self.content_layout = QVBoxLayout(self.content_widget)
-        self.content_layout.setContentsMargins(16, 0, 0, 0)
+        self.content_layout.setContentsMargins(0, 0, 0, 0)
         self.content_layout.setSpacing(2)
         
         for icon_str, text, page in self.items:
-            btn = SidebarBtn(icon_str, text, page)
+            btn = SidebarBtn(icon_str, text, page, is_subitem=True)
             self.buttons.append(btn)
             self.content_layout.addWidget(btn)
             

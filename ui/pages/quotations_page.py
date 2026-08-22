@@ -182,8 +182,8 @@ class QuotationsPage(QWidget):
                 border-bottom: 1px solid {COLORS['border']};
             }}
             QTableWidget::item:selected {{
-                background-color: #E2E8F0;
-                color: {COLORS['text_primary']};
+                background-color: {COLORS['primary']};
+                color: white;
             }}
         """)
         self.table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -216,12 +216,14 @@ class QuotationsPage(QWidget):
         self.quotations = QuotationService.get_quotations(self.active_company_id, context=self.context)
         
         self.table.setUpdatesEnabled(False)
+        self.table.setSortingEnabled(False)
         self.table.setRowCount(0)
         
         for i, inv in enumerate(self.quotations):
             self.table.insertRow(i)
             self._populate_row(i, inv)
             
+        self.table.setSortingEnabled(True)
         self.table.setUpdatesEnabled(True)
         
     def _update_serial_numbers(self):

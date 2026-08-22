@@ -23,7 +23,7 @@ class RowActionDialog(QDialog):
         self.setWindowTitle("Action")
         self.setFixedSize(320, 160)
         self.setWindowFlags(Qt.WindowType.Dialog)
-        self.setStyleSheet(f"QDialog {{ background-color: {COLORS['bg_card']}; border-radius: 8px; border: 1px solid {COLORS['border_card']}; }}")
+        self.setStyleSheet(f"QDialog {{ background-color: {COLORS['bg_card']}; border-radius: 8px; border: 2px solid {COLORS['primary']}; }}")
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
@@ -146,8 +146,8 @@ class ServicesPage(QWidget):
                 border-bottom: 1px solid {COLORS['border']};
             }}
             QTableWidget::item:selected {{
-                background-color: #EFF6FF;
-                color: {COLORS['primary']};
+                background-color: {COLORS['primary']};
+                color: white;
             }}
         """)
         self.table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -178,12 +178,14 @@ class ServicesPage(QWidget):
         self.services = ServiceCatalogue.get_services(self.active_company_id, term)
         
         self.table.setUpdatesEnabled(False)
+        self.table.setSortingEnabled(False)
         self.table.setRowCount(0)
         
         for i, s in enumerate(self.services):
             self.table.insertRow(i)
             self._populate_row(i, s)
             
+        self.table.setSortingEnabled(True)
         self.table.setUpdatesEnabled(True)
 
     def _update_serial_numbers(self):
