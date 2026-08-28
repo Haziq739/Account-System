@@ -63,21 +63,9 @@ class CreateInvoiceDialog(QDialog):
                 color: {COLORS['text_primary']}; 
                 background-color: {COLORS['bg_input']}; 
             }}
-            QComboBox QAbstractItemView {{
-                background-color: {COLORS['bg_card']};
-                border: 1px solid {COLORS['border']};
-                outline: 0px;
-            }}
-            QComboBox QAbstractItemView::item {{
-                padding: 8px;
-                border: none;
-                color: {COLORS['text_primary']};
-                background-color: transparent;
-            }}
-            QComboBox QAbstractItemView::item:selected, QComboBox QAbstractItemView::item:hover {{
-                background-color: {COLORS['primary']};
-                color: white;
-            }}
+            
+            
+            
         """)
         
         self._load_data()
@@ -133,6 +121,12 @@ class CreateInvoiceDialog(QDialog):
         super().keyPressEvent(event)
 
     def _build(self):
+        def _fix_cb(cb):
+            from PySide6.QtWidgets import QListView, QStyledItemDelegate
+            cb.setMaxVisibleItems(7)
+            v = QListView()
+            cb.setView(v)
+            cb.setItemDelegate(QStyledItemDelegate())
         root = QVBoxLayout(self)
         root.setSpacing(15)
         root.setContentsMargins(20, 20, 20, 20)
@@ -144,6 +138,7 @@ class CreateInvoiceDialog(QDialog):
         cust_layout = QVBoxLayout()
         cust_layout.addWidget(QLabel("Customer *"))
         self.customer_cb = QComboBox()
+        _fix_cb(self.customer_cb)
         self.customer_cb.setEditable(True)
         self.customer_cb.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
         self.customer_cb.lineEdit().setPlaceholderText("Search or enter new customer...")
@@ -219,6 +214,7 @@ class CreateInvoiceDialog(QDialog):
         srv_search_layout = QVBoxLayout()
         srv_search_layout.addWidget(QLabel("Service Search *", styleSheet=f"color: {COLORS['text_primary']}; font-weight: 500; font-size: 13px;"))
         self.service_cb = QComboBox()
+        _fix_cb(self.service_cb)
         self.service_cb.setEditable(True)
         self.service_cb.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
         self.service_cb.lineEdit().setPlaceholderText("Search or enter new service...")
@@ -318,6 +314,7 @@ class CreateInvoiceDialog(QDialog):
         
         totals_grid.addWidget(QLabel("Payment Method:"), row, 0)
         self.pay_method_cb = QComboBox()
+        _fix_cb(self.pay_method_cb)
         self.pay_method_cb.addItems(["Cash", "Bank Transfer", "Cheque", "Credit"])
         totals_grid.addWidget(self.pay_method_cb, row, 1)
         row += 1

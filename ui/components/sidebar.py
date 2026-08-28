@@ -91,6 +91,7 @@ class CollapsibleSection(QWidget):
     def toggle(self):
         self.is_expanded = not self.is_expanded
         self.content_widget.setVisible(self.is_expanded)
+        self.toggle_btn.setChecked(self.is_expanded)
         if self.is_expanded:
             self.toggle_btn.setText(self.toggle_btn.text().replace("▼", "▲"))
         else:
@@ -211,6 +212,8 @@ class Sidebar(QFrame):
 
         def on_section_toggled(active_sec):
             if active_sec.is_expanded:
+                for btn in self._buttons:
+                    btn.setChecked(False)
                 for sec in self._sections:
                     if sec != active_sec:
                         sec.collapse()

@@ -134,7 +134,7 @@ class DayBookService:
             }
 
     @staticmethod
-    def add_expense(company_id: int, title: str, amount: float, expense_date: date, notes: str, user_id: int = None, customer_id: int = None, vendor_id: int = None, employee_id: int = None) -> dict:
+    def add_expense(company_id: int, title: str, amount: float, expense_date: date, notes: str, user_id: int = None, customer_id: int = None, vendor_id: int = None, employee_id: int = None, advance_month: str = None) -> dict:
         """Adds a manual expense entry for the Day Book."""
         from models.employee_advance import EmployeeAdvance
         with SessionLocal() as s:
@@ -152,7 +152,7 @@ class DayBookService:
             s.flush() # to get new_exp.id
             
             if employee_id:
-                month_str = expense_date.strftime("%B %Y")
+                month_str = advance_month if advance_month else expense_date.strftime("%B %Y")
                 new_adv = EmployeeAdvance(
                     company_id=company_id,
                     employee_id=employee_id,

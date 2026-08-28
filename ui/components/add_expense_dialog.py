@@ -55,21 +55,9 @@ class AddExpenseDialog(QDialog):
                 color: {COLORS['text_primary']};
             }}
             QLineEdit:focus, QTextEdit:focus, QDoubleSpinBox:focus, QComboBox:focus {{ border: 1px solid {COLORS['primary']}; }}
-            QComboBox QAbstractItemView {{
-                background-color: {COLORS['bg_card']};
-                border: 1px solid {COLORS['border']};
-                outline: 0px;
-            }}
-            QComboBox QAbstractItemView::item {{
-                padding: 8px;
-                border: none;
-                color: {COLORS['text_primary']};
-                background-color: transparent;
-            }}
-            QComboBox QAbstractItemView::item:selected, QComboBox QAbstractItemView::item:hover {{
-                background-color: {COLORS['primary']};
-                color: white;
-            }}
+            
+            
+            
         """)
         self._build()
 
@@ -81,6 +69,12 @@ class AddExpenseDialog(QDialog):
         super().keyPressEvent(event)
 
     def _build(self):
+        def _fix_cb(cb):
+            from PySide6.QtWidgets import QListView, QStyledItemDelegate
+            cb.setMaxVisibleItems(7)
+            v = QListView()
+            cb.setView(v)
+            cb.setItemDelegate(QStyledItemDelegate())
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)

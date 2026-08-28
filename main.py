@@ -1,5 +1,6 @@
 import sys
 from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import QSettings
 from ui.auth.splash_screen import SplashScreen
 from ui.main_window import MainWindow
 from ui.auth.setup_window import SetupWindow
@@ -27,6 +28,15 @@ class ApplicationManager:
             logger.info("First run — showing setup window.")
             self._show_setup()
         else:
+            settings = QSettings("KDynamics", "RNScanner")
+            user_id = settings.value("last_logged_in_user_id")
+            if user_id:
+                user = AuthService.get_user_by_id(int(user_id))
+                if user:
+                    logger.info("Auto-login triggered.")
+                    self._show_main(user)
+                    return
+            
             logger.info("Users exist — showing login window.")
             self._show_login()
 
@@ -42,7 +52,7 @@ class ApplicationManager:
     def _show_login(self):
         self._close_current()
         w = LoginWindow()
-        w.login_successful.connect(self._show_main)
+        w.login_successful.connect(self._on_login_successful)
         w.go_signup.connect(self._show_signup)
         w.show()
         self._win = w
@@ -57,6 +67,11 @@ class ApplicationManager:
         self._win = w
 
     # ── Main dashboard ─────────────────────────────────────────────────────────
+    def _on_login_successful(self, user: dict):
+        settings = QSettings("KDynamics", "RNScanner")
+        settings.setValue("last_logged_in_user_id", user["id"])
+        self._show_main(user)
+
     def _show_main(self, user: dict):
         self._close_current()
         logger.info(f"User '{user['username']}' logged in.")
@@ -111,24 +126,7 @@ def main():
     # default colors (near-black) regardless of per-dialog stylesheets.
     from ui.design_system import COLORS, init_theme
     init_theme()
-    app.setStyleSheet(f"""
-        QComboBox QAbstractItemView {{
-            background-color: {COLORS['bg_card']};
-            color: {COLORS['text_primary']};
-            selection-background-color: {COLORS['primary']};
-            selection-color: {COLORS['text_on_primary']};
-            border: 1px solid {COLORS['border']};
-            outline: none;
-        }}
-        QComboBox QAbstractItemView::item {{
-            min-height: 28px;
-            padding: 4px 8px;
-        }}
-        QComboBox QAbstractItemView::item:hover {{
-            background-color: {COLORS['bg_input']};
-            color: {COLORS['text_primary']};
-        }}
-    """)
+    # Cleared broken stylesheet
 
     manager = ApplicationManager()
     manager.start()

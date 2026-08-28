@@ -73,6 +73,12 @@ class VendorFormDialog(QDialog):
         super().keyPressEvent(event)
 
     def _build(self):
+        def _fix_cb(cb):
+            from PySide6.QtWidgets import QListView, QStyledItemDelegate
+            cb.setMaxVisibleItems(7)
+            v = QListView()
+            cb.setView(v)
+            cb.setItemDelegate(QStyledItemDelegate())
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(16)
@@ -183,24 +189,13 @@ class CreateBillDialog(QDialog):
             QLineEdit:focus, QTextEdit:focus, QComboBox, QCompleter, QListView:focus, QDoubleSpinBox:focus, QDateEdit:focus {{
                 border: 1px solid {COLORS['primary']};
             }}
-            QComboBox QAbstractItemView {{
-                background-color: {COLORS['bg_card']};
-                border: 1px solid {COLORS['border']};
-                outline: 0px;
-            }}
-            QComboBox QAbstractItemView::item {{
-                padding: 8px;
-                border: none;
-                color: {COLORS['text_primary']};
-                background-color: transparent;
-            }}
-            QComboBox QAbstractItemView::item:selected, QComboBox QAbstractItemView::item:hover {{
-                background-color: {COLORS['primary']};
-                color: white;
-            }}
+            
+            
+            
         """)
         
         self.vendor_cb = QComboBox()
+        _fix_cb(self.vendor_cb)
         self.vendor_cb.setEditable(True)
         self.vendor_cb.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
         self.vendor_cb.lineEdit().setPlaceholderText("Search or enter new vendor...")
@@ -257,6 +252,12 @@ class CreateBillDialog(QDialog):
         super().keyPressEvent(event)
 
     def _build(self):
+        def _fix_cb(cb):
+            from PySide6.QtWidgets import QListView, QStyledItemDelegate
+            cb.setMaxVisibleItems(7)
+            v = QListView()
+            cb.setView(v)
+            cb.setItemDelegate(QStyledItemDelegate())
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(16)

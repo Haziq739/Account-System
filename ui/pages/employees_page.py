@@ -103,10 +103,21 @@ class RowActionDialog(QDialog):
         
         self.btn_history.clicked.connect(lambda: self.done(1))
         self.btn_edit.clicked.connect(lambda: self.done(2))
+        
+        self.btn_add_adv = QPushButton("Add Advance")
+        self.btn_add_adv.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_add_adv.clicked.connect(lambda: self.done(4))
+        
+        self.btn_slip = QPushButton("Generate Salary Slip")
+        self.btn_slip.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_slip.clicked.connect(lambda: self.done(3))
+        
         self.btn_del.clicked.connect(lambda: self.done(8))
         self.btn_cancel.clicked.connect(lambda: self.reject())
         
         layout.addWidget(self.btn_history)
+        layout.addWidget(self.btn_add_adv)
+        layout.addWidget(self.btn_slip)
         layout.addWidget(self.btn_edit)
         layout.addWidget(self.btn_del)
         layout.addWidget(self.btn_cancel)
@@ -332,6 +343,10 @@ class EmployeesPage(QWidget):
             hist_dlg.exec()
         elif res == 2:
             self._on_edit(emp_id)
+        elif res == 3:
+            self._on_generate_salary_slip(emp_id)
+        elif res == 4:
+            self._on_add_advance(emp_id, emp_name)
         elif res == 8:
             self._on_delete(emp_id)
 
@@ -361,6 +376,55 @@ class EmployeesPage(QWidget):
         
         # Actions
 
+    def _on_add_advance(self, employee_id: int, employee_name: str):
+        from ui.components.employee_dialogs import AddAdvanceDialog
+        from services.daybook_service import DayBookService
+        from datetime import date
+        
+        dlg = AddAdvanceDialog(self)
+        if dlg.exec():
+            data = dlg.get_data()
+            if data['amount'] <= 0:
+                show_message(self, "error", "Invalid Amount", "Please enter an amount greater than 0.")
+                return
+            
+            try:
+                title = f"Advance to Employee: {employee_name}"
+                notes = f"Target Month: {data['month']}"
+                DayBookService.add_expense(
+                    company_id=self.current_company["id"],
+                    title=title,
+                    amount=data['amount'],
+                    expense_date=date.today(),
+                    notes=notes,
+                    user_id=self.current_user["id"],
+                    employee_id=employee_id,
+                    advance_month=data['month']
+                )
+                show_message(self, "success", "Success", "Advance added successfully.")
+                self.refresh_data()
+            except Exception as e:
+                show_message(self, "error", "Error", f"Failed to add advance: {e}")
+
+    def _on_generate_salary_slip(self, employee_id: int):
+        emp = next((e for e in self.employees if e["id"] == employee_id), None)
+        if not emp: return
+        
+        try:
+            from services.pdf_generator import PDFGenerator
+            from PySide6.QtWidgets import QFileDialog
+            import shutil
+            import os
+            
+            filepath = PDFGenerator.generate_individual_salary_slip(self.current_company["id"], emp)
+            default_name = os.path.basename(filepath)
+            save_path, _ = QFileDialog.getSaveFileName(self, "Save Salary Slip", default_name, "PDF Files (*.pdf)")
+            
+            if save_path:
+                shutil.copy2(filepath, save_path)
+                show_message(self, "success", "Success", f"Salary slip generated successfully at:\n{save_path}")
+        except Exception as e:
+            show_message(self, "error", "Error", f"Failed to generate slip: {e}")
 
     def _find_row_by_id(self, employee_id: int) -> int:
         for row in range(self.table.rowCount()):

@@ -1,4 +1,6 @@
+from ui.components.custom_combobox import CustomComboBox
 from PySide6.QtWidgets import (
+    QStyledItemDelegate,
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
     QLineEdit, QPushButton, QComboBox, QDateEdit, QFileDialog,
     QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView, QMessageBox,
@@ -16,6 +18,27 @@ def _btn(text: str, primary: bool = False) -> QPushButton:
     b.setObjectName("primary_btn" if primary else "outline_btn")
     b.setCursor(Qt.CursorShape.PointingHandCursor)
     return b
+
+
+from PySide6.QtGui import QColor, QPalette
+from PySide6.QtWidgets import QStyle
+
+class ComboBoxDelegate(QStyledItemDelegate):
+    def paint(self, painter, option, index):
+        # Draw custom blue background on hover/select
+        if option.state & QStyle.State_Selected or option.state & QStyle.State_MouseOver:
+            from ui.design_system import COLORS
+            painter.fillRect(option.rect, QColor(COLORS['primary']))
+            
+            # Force text to white
+            palette = option.palette
+            palette.setColor(QPalette.Text, QColor("white"))
+            palette.setColor(QPalette.WindowText, QColor("white"))
+            palette.setColor(QPalette.HighlightedText, QColor("white"))
+            option.palette = palette
+            
+        super().paint(painter, option, index)
+
 
 class AddPaymentDialog(QDialog):
     def __init__(self, parent, company_id: int, current_user: dict):
@@ -37,18 +60,8 @@ class AddPaymentDialog(QDialog):
                 border-radius: 6px; padding: 8px;
                 color: {COLORS['text_primary']};
             }}
-            QComboBox QAbstractItemView {{
-                background-color: {COLORS['bg_card']};
-                color: {COLORS['text_primary']};
-                selection-background-color: {COLORS['primary']};
-                selection-color: white;
-                border: 1px solid {COLORS['border']};
-                outline: 0px;
-                padding: 4px;
-            }}
-            QComboBox QAbstractItemView::item {{
-                min-height: 28px;
-                padding: 4px 8px;
+            QLineEdit:focus, QComboBox:focus, QDateEdit:focus {{
+                border: 1px solid {COLORS['primary']};
             }}
             QRadioButton {{
                 color: {COLORS['text_primary']};
@@ -118,20 +131,24 @@ class AddPaymentDialog(QDialog):
 
         # Customer
         layout.addWidget(QLabel("Customer *"))
-        self.customer_cb = QComboBox()
-        self.customer_cb.setView(QListView())  # Fixes Windows native black dropdown popup bug
+        self.customer_cb = CustomComboBox()
+        
+        
         self.customer_cb.addItem("-- Select Customer --", None)
         for c in self.customers:
             self.customer_cb.addItem(c['name'], c['id'])
         self.customer_cb.currentIndexChanged.connect(self._on_customer_changed)
+        
         layout.addWidget(self.customer_cb)
 
         # Invoice section (shown only when Payment Against Invoice is selected)
         self.inv_label = QLabel("Select Invoice *")
-        self.invoice_cb = QComboBox()
-        self.invoice_cb.setView(QListView())  # Fixes Windows native black dropdown popup bug
+        self.invoice_cb = CustomComboBox()
+        
+        
         self.invoice_cb.addItem("-- Select an Invoice --", None)
         self.invoice_cb.currentIndexChanged.connect(self._on_invoice_changed)
+        
 
         self.inv_summary_lbl = QLabel("")
         self.inv_summary_lbl.setStyleSheet(
@@ -156,9 +173,11 @@ class AddPaymentDialog(QDialog):
 
         # Payment Method
         layout.addWidget(QLabel("Payment Method *"))
-        self.method_cb = QComboBox()
-        self.method_cb.setView(QListView())  # Fixes Windows native black dropdown popup bug
+        self.method_cb = CustomComboBox()
+        
+        
         self.method_cb.addItems(["Cash", "Bank Transfer", "Cheque", "Credit"])
+        
         layout.addWidget(self.method_cb)
 
         # Payment Date
@@ -351,7 +370,7 @@ class RecordInvoicePaymentDialog(QDialog):
         layout.addWidget(self.amount_input)
         
         layout.addWidget(QLabel("Payment Method *"))
-        self.method_cb = QComboBox()
+        self.method_cb = CustomComboBox()
         self.method_cb.addItems(["Cash", "Bank Transfer", "Cheque", "Credit"])
         layout.addWidget(self.method_cb)
         

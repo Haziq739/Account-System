@@ -30,7 +30,7 @@ class SplashScreen(QWidget):
             }}
         """)
         self._build_ui()
-        QTimer.singleShot(3000, self.on_done)
+        QTimer.singleShot(5000, self.on_done)
 
     def _build_ui(self):
         h = QHBoxLayout(self)

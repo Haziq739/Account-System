@@ -10,6 +10,10 @@ from ui.design_system import COLORS
 from ui.auth.setup_window import show_message
 from ui.components.customer_dialogs import CustomerFormDialog, CSVImportSummaryDialog
 from services.customer import CustomerService
+from services.ledger_service import LedgerService
+from services.daybook_service import DayBookService
+from ui.pages.ledger_page import StatementPDFWorker
+from PySide6.QtCore import QDate
 
 def _btn(text: str, primary: bool = False, icon: str = "") -> QPushButton:
     b = QPushButton(f"{icon} {text}".strip())
@@ -33,10 +37,10 @@ class LoadingDialog(QDialog):
         layout.addWidget(lbl)
 
 class RowActionDialog(QDialog):
-    def __init__(self, parent, title: str):
+    def __init__(self, parent, title: str, balance: float):
         super().__init__(parent)
         self.setWindowTitle("Action")
-        self.setFixedSize(320, 160)
+        self.setFixedSize(420, 300)
         self.setWindowFlags(Qt.WindowType.Dialog)
         self.setStyleSheet(f"QDialog {{ background-color: {COLORS['bg_card']}; border-radius: 8px; border: 2px solid {COLORS['primary']}; }}")
         
@@ -48,32 +52,98 @@ class RowActionDialog(QDialog):
         lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(lbl)
         
-        layout.addSpacing(20)
+        bal_text = f"Outstanding Balance: {balance:.2f}"
+        if balance < 0:
+            bal_text = f"Advance Balance: {abs(balance):.2f}"
+        bal_color = "#E53E3E" if balance > 0 else COLORS['primary'] if balance < 0 else COLORS['text_primary']
         
-        btn_layout = QGridLayout()
-        btn_layout.setColumnStretch(0, 1)
-        btn_layout.setColumnStretch(1, 1)
-        btn_layout.setColumnStretch(2, 1)
+        bal_lbl = QLabel(bal_text)
+        bal_lbl.setStyleSheet(f"color: {bal_color}; font-size: 14px; font-weight: 600;")
+        bal_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(bal_lbl)
         
-        self.edit_btn = _btn("Edit", primary=True)
+        layout.addSpacing(15)
+        
+        btn_width, btn_height = 180, 40
+        
+        self.add_bal_btn = _btn("Add Balance", primary=True)
+        self.stmt_btn = _btn("Download Statement")
+        self.edit_btn = _btn("Edit")
         self.del_btn = QPushButton("Delete")
         self.del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.del_btn.setStyleSheet(f"background-color: #FEE2E2; color: #EF4444; border: 1px solid #FCA5A5; padding: 8px 16px; border-radius: 6px; font-weight: 600;")
         self.cancel_btn = _btn("Cancel")
         
-        self.edit_btn.setFixedSize(84, 38)
-        self.del_btn.setFixedSize(84, 38)
-        self.cancel_btn.setFixedSize(84, 38)
+        for btn in [self.add_bal_btn, self.stmt_btn, self.edit_btn, self.del_btn, self.cancel_btn]:
+            btn.setFixedSize(btn_width, btn_height)
+            
+        row1 = QHBoxLayout()
+        row1.addWidget(self.add_bal_btn)
+        row1.addWidget(self.stmt_btn)
         
-        btn_layout.addWidget(self.edit_btn, 0, 0)
-        btn_layout.addWidget(self.del_btn, 0, 1)
-        btn_layout.addWidget(self.cancel_btn, 0, 2)
+        row2 = QHBoxLayout()
+        row2.addWidget(self.edit_btn)
+        row2.addWidget(self.del_btn)
         
-        layout.addLayout(btn_layout)
+        row3 = QHBoxLayout()
+        row3.addWidget(self.cancel_btn)
+        row3.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        layout.addLayout(row1)
+        layout.addLayout(row2)
+        layout.addLayout(row3)
         
         self.cancel_btn.clicked.connect(self.reject)
         self.edit_btn.clicked.connect(lambda: self.done(1))
         self.del_btn.clicked.connect(lambda: self.done(2))
+        self.add_bal_btn.clicked.connect(lambda: self.done(3))
+        self.stmt_btn.clicked.connect(lambda: self.done(4))
+
+class AddBalanceDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Add Outstanding Balance")
+        self.setFixedSize(350, 220)
+        self.setWindowFlags(Qt.WindowType.Dialog)
+        self.setStyleSheet(f"QDialog {{ background-color: {COLORS['bg_card']}; border-radius: 8px; border: 2px solid {COLORS['primary']}; }}")
+        
+        layout = QVBoxLayout(self)
+        layout.setSpacing(15)
+        
+        lbl = QLabel("Add Balance")
+        lbl.setStyleSheet(f"color: {COLORS['text_primary']}; font-size: 18px; font-weight: 700;")
+        layout.addWidget(lbl)
+        
+        self.amount_input = QLineEdit()
+        self.amount_input.setPlaceholderText("Amount (e.g. 500)")
+        self.amount_input.setStyleSheet(f"padding: 8px; border: 1px solid {COLORS['border']}; border-radius: 4px;")
+        layout.addWidget(self.amount_input)
+        
+        self.notes_input = QLineEdit()
+        self.notes_input.setPlaceholderText("Notes (optional)")
+        self.notes_input.setStyleSheet(f"padding: 8px; border: 1px solid {COLORS['border']}; border-radius: 4px;")
+        layout.addWidget(self.notes_input)
+        
+        btn_layout = QHBoxLayout()
+        save_btn = _btn("Save", primary=True)
+        cancel_btn = _btn("Cancel")
+        save_btn.clicked.connect(self.accept)
+        cancel_btn.clicked.connect(self.reject)
+        
+        btn_layout.addStretch()
+        btn_layout.addWidget(cancel_btn)
+        btn_layout.addWidget(save_btn)
+        layout.addLayout(btn_layout)
+        
+    def get_data(self):
+        try:
+            amount = float(self.amount_input.text() or "0")
+        except:
+            amount = 0.0
+        return {
+            "amount": amount,
+            "notes": self.notes_input.text()
+        }
 
 class CSVImportWorker(QThread):
     """Background worker thread to run CSV import without freezing the UI."""
@@ -237,12 +307,19 @@ class CustomersPage(QWidget):
         customer_id = item.data(Qt.ItemDataRole.UserRole)
         customer_name = self.table.item(row, 1).text()
         
-        dlg = RowActionDialog(self, f"Customer: {customer_name}")
+        entries = LedgerService.get_customer_ledger(self.active_company_id, customer_id)
+        balance = entries[-1]['balance'] if entries else 0.0
+        
+        dlg = RowActionDialog(self, f"Customer: {customer_name}", balance)
         result = dlg.exec()
         if result == 1:
             self._on_edit(customer_id)
         elif result == 2:
             self._on_delete(customer_id)
+        elif result == 3:
+            self._on_add_balance(customer_id, customer_name)
+        elif result == 4:
+            self._on_download_statement(customer_id, customer_name)
 
     def _populate_row(self, row_idx: int, c: dict):
         # S.No (Display Row Index + 1)
@@ -354,6 +431,67 @@ class CustomersPage(QWidget):
                     self._update_serial_numbers()
             else:
                 show_message(self, "error", "Error", "Failed to delete customer.")
+
+
+    def _on_add_balance(self, customer_id: int, customer_name: str):
+        dlg = AddBalanceDialog(self)
+        if dlg.exec():
+            data = dlg.get_data()
+            if data['amount'] <= 0:
+                show_message(self, "error", "Invalid Amount", "Please enter an amount greater than 0.")
+                return
+            
+            try:
+                from datetime import date
+                LedgerService.add_adjustment(
+                    company_id=self.active_company_id,
+                    customer_id=customer_id,
+                    amount=data['amount'],
+                    notes=data['notes'],
+                    date_val=date.today()
+                )
+                show_message(self, "success", "Success", "Balance added successfully.")
+            except Exception as e:
+                show_message(self, "error", "Error", f"Failed to add balance: {e}")
+
+    def _on_download_statement(self, customer_id: int, customer_name: str):
+        # We need a loading state, we can use LoadingDialog
+        self.loading_dlg = LoadingDialog(self, "Generating Statement...")
+        
+        # Fetch all entries without date filters to get full history
+        entries = LedgerService.get_customer_ledger(self.active_company_id, customer_id)
+        
+        e_date = QDate.currentDate().toPython()
+        if entries:
+            s_date = entries[0]["date"]
+        else:
+            s_date = e_date
+            
+        cust_name_safe = customer_name.replace(" ", "_")
+        default_name = f"Statement_{cust_name_safe}_{s_date.strftime('%Y%m%d')}_to_{e_date.strftime('%Y%m%d')}.pdf"
+        
+        save_path, _ = QFileDialog.getSaveFileName(self, "Save Statement", default_name, "PDF Files (*.pdf)")
+        if not save_path: return
+        
+        self.worker = StatementPDFWorker(self.active_company_id, customer_id, s_date, e_date, 'download', save_path, entries)
+        self.worker.finished.connect(self._on_pdf_ready)
+        self.worker.error.connect(self._on_pdf_error)
+        self.worker.start()
+        self.loading_dlg.exec()
+        
+    def _on_pdf_ready(self, path: str, action: str, save_path: str):
+        self.loading_dlg.accept()
+        import shutil
+        if save_path:
+            try:
+                shutil.copy2(path, save_path)
+                show_message(self, "success", "Success", "Statement downloaded successfully.")
+            except Exception as e:
+                show_message(self, "error", "Error", f"Failed to save statement: {e}")
+
+    def _on_pdf_error(self, err: str):
+        self.loading_dlg.accept()
+        show_message(self, "error", "Error", f"Failed to generate statement: {err}")
 
     def _on_import(self):
         file_path, _ = QFileDialog.getOpenFileName(

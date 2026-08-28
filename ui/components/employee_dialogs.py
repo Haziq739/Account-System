@@ -273,3 +273,84 @@ class ResetAdvancesDialog(QDialog):
 
     def get_selected_month(self) -> str:
         return self.month_combo.currentText()
+
+class AddAdvanceDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Add Advance")
+        self.setFixedSize(400, 310)
+        self.setStyleSheet(f"""
+            QDialog {{ background-color: {COLORS['bg_card']}; }}
+            QComboBox, QDoubleSpinBox {{
+                background-color: {COLORS['bg_input']};
+                border: 1px solid {COLORS['border']};
+                border-radius: 6px;
+                padding: 10px;
+                color: {COLORS['text_primary']};
+                font-size: 14px;
+                min-height: 24px;
+            }}
+            QComboBox:focus, QDoubleSpinBox:focus {{
+                border: 1px solid {COLORS['primary']};
+            }}
+        """)
+        
+        from PySide6.QtWidgets import QDoubleSpinBox, QComboBox
+        self.amount_input = QDoubleSpinBox()
+        self.amount_input.setRange(0, 999999999)
+        self.amount_input.setDecimals(2)
+        self.amount_input.setButtonSymbols(QDoubleSpinBox.ButtonSymbols.NoButtons)
+        
+        self.month_combo = QComboBox()
+        self._populate_months()
+        
+        self._build()
+
+    def _populate_months(self):
+        from datetime import date
+        from dateutil.relativedelta import relativedelta
+        current = date.today()
+        # Start from next month and go back 11 months
+        current = current + relativedelta(months=1)
+        for i in range(12):
+            m_str = current.strftime("%B %Y")
+            self.month_combo.addItem(m_str)
+            current = current - relativedelta(months=1)
+        # Select current month by default
+        self.month_combo.setCurrentText(date.today().strftime("%B %Y"))
+
+    def _build(self):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(16)
+        
+        title = QLabel("Add Employee Advance")
+        title.setStyleSheet(f"color: {COLORS['text_primary']}; font-size: 18px; font-weight: 700;")
+        layout.addWidget(title)
+        
+        layout.addWidget(_label("Amount *"))
+        layout.addWidget(self.amount_input)
+        
+        layout.addWidget(_label("Target Month *"))
+        layout.addWidget(self.month_combo)
+        
+        layout.addSpacing(30)
+        layout.addStretch()
+        
+        btn_layout = QHBoxLayout()
+        cancel_btn = _btn("Cancel")
+        cancel_btn.clicked.connect(self.reject)
+        
+        save_btn = _btn("Save Advance", primary=True)
+        save_btn.clicked.connect(self.accept)
+        
+        btn_layout.addWidget(cancel_btn)
+        btn_layout.addWidget(save_btn)
+        
+        layout.addLayout(btn_layout)
+
+    def get_data(self) -> dict:
+        return {
+            "amount": self.amount_input.value(),
+            "month": self.month_combo.currentText()
+        }

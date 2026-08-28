@@ -1,0 +1,5 @@
+[project]
+name = "account-system"
+version = "0.1.0"
+description = "Account System"
+dependencies = ["PySide6>=6.5.0", "SQLAlchemy>=2.0.0", "alembic>=1.11.0", "bcrypt>=4.0.0"]

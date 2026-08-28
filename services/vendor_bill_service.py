@@ -73,6 +73,20 @@ class VendorBillService:
                 f"Created Vendor Bill {bill_number} for {amount}", user_id
             )
             
+            # Automatically add to Day Book as an Expense
+            from models.expense import Expense
+            new_exp = Expense(
+                company_id=company_id,
+                vendor_id=vendor_id,
+                title=f"Vendor Bill {bill_number}",
+                amount=amount,
+                expense_date=bill_date,
+                notes=description
+            )
+            s.add(new_exp)
+            s.commit()
+
+            
             return {
                 "id": new_bill.id,
                 "bill_number": new_bill.bill_number
@@ -102,6 +116,20 @@ class VendorBillService:
             b.amount = amount
             s.commit()
             
+            # Also update the corresponding Expense in Day Book
+            from models.expense import Expense
+            exp = s.query(Expense).filter(
+                Expense.company_id == company_id,
+                Expense.title == f"Vendor Bill {b.bill_number}",
+                Expense.is_deleted == False
+            ).first()
+            
+            if exp:
+                exp.vendor_id = vendor_id
+                exp.amount = amount
+                exp.notes = description
+                s.commit()
+            
             HistoryService.log_action("update", "VendorBill", b.bill_number, f"Updated vendor bill {b.bill_number}", user_id)
             return True
 
@@ -120,6 +148,17 @@ class VendorBillService:
             b.is_deleted = True
             b_num = b.bill_number
             s.commit()
+            
+            # Also delete the corresponding Expense in Day Book
+            from models.expense import Expense
+            exp = s.query(Expense).filter(
+                Expense.company_id == company_id,
+                Expense.title == f"Vendor Bill {b_num}",
+                Expense.is_deleted == False
+            ).first()
+            if exp:
+                exp.is_deleted = True
+                s.commit()
             
             HistoryService.log_action("delete", "VendorBill", b_num, f"Deleted vendor bill {b_num}", user_id)
             return True

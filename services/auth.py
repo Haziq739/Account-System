@@ -87,6 +87,19 @@ class AuthService:
             }
 
     @staticmethod
+    def get_user_by_id(user_id: int):
+        with SessionLocal() as s:
+            user = s.query(User).filter(User.id == user_id).first()
+            if not user:
+                return None
+            return {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "role": user.role,
+            }
+
+    @staticmethod
     def verify_email(email: str) -> bool:
         """True if the email belongs to a registered user."""
         with SessionLocal() as s:

@@ -79,6 +79,7 @@ class QuotationService:
                 "quotation_number": q.quotation_number,
                 "company_id": q.company_id,
                 "customer_id": q.customer_id,
+                "customer_name": q.customer.name if q.customer else "Unknown",
                 "category": q.category,
                 "issue_date": q.issue_date,
                 "valid_until": q.valid_until,

@@ -1,13 +1,36 @@
 import os
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Flowable
 from reportlab.lib.styles import getSampleStyleSheet
+
+class BottomSpacer(Flowable):
+    def __init__(self, target_flowable):
+        Flowable.__init__(self)
+        self.target = target_flowable
+
+    def wrap(self, availWidth, availHeight):
+        w, h = self.target.wrap(availWidth, availHeight)
+        self.width = availWidth
+        self.height = max(0, availHeight - h - 30) # Push to bottom, leave 30pt padding
+        return (self.width, self.height)
+
+    def draw(self):
+        pass
 from reportlab.lib import colors
 from database.session import SessionLocal
 from models.invoice import Invoice
 from models.company import Company
 
 class PDFGenerator:
+    @staticmethod
+    def _draw_page_border(canvas, doc):
+        canvas.saveState()
+        canvas.setStrokeColor(colors.HexColor("#CBD5E1"))
+        canvas.setLineWidth(1)
+        width, height = doc.pagesize
+        canvas.rect(20, 20, width - 40, height - 40)
+        canvas.restoreState()
+
     @staticmethod
     def generate_invoice_pdf(invoice_id: int) -> str:
         with SessionLocal() as s:
@@ -27,8 +50,8 @@ class PDFGenerator:
                 
             filename = f"Invoice_{inv.invoice_number}.pdf"
             filepath = os.path.join(pdf_dir, filename)
-            
-            doc = SimpleDocTemplate(filepath, pagesize=letter)
+            from reportlab.lib.pagesizes import A4
+            doc = SimpleDocTemplate(filepath, pagesize=A4)
             elements = []
             styles = getSampleStyleSheet()
             
@@ -47,39 +70,76 @@ class PDFGenerator:
                     if os.path.exists(fallback_path):
                         logo_file = fallback_path
 
+            from reportlab.lib.styles import ParagraphStyle
+            comp_style = ParagraphStyle('CompStyle', parent=styles['Normal'], fontSize=18, leading=22, spaceAfter=4)
+            doc_style = ParagraphStyle('DocStyle', parent=styles['Normal'], fontSize=14, leading=18, spaceAfter=4)
+            
+            # --- Header Table (Company & Logo) ---
+            comp_info = []
+            comp_info.append(Paragraph(f"<b>{comp.name}</b>", comp_style))
+            if comp.address: comp_info.append(Paragraph(comp.address, styles['Normal']))
+            if comp.phone: comp_info.append(Paragraph(f"Phone: {comp.phone}", styles['Normal']))
+            
+            logo_element = ""
             if logo_file:
                 from reportlab.platypus import Image
                 try:
-                    logo = Image(logo_file)
+                    logo_element = Image(logo_file)
                     try:
-                        aspect = logo.imageWidth / float(logo.imageHeight)
-                        logo.drawHeight = 60
-                        logo.drawWidth = 60 * aspect
+                        aspect = logo_element.imageWidth / float(logo_element.imageHeight)
+                        logo_element.drawHeight = 60
+                        logo_element.drawWidth = 60 * aspect
                     except AttributeError:
-                        logo.drawHeight = 60
-                        logo.drawWidth = 100
-                    elements.append(logo)
+                        logo_element.drawHeight = 60
+                        logo_element.drawWidth = 100
                 except Exception as e:
                     print(f"Error loading logo: {e}")
-            
-            elements.append(Paragraph(f"<b>{comp.name}</b>", styles['Heading1']))
-            if comp.address: elements.append(Paragraph(comp.address, styles['Normal']))
-            if comp.phone: elements.append(Paragraph(f"Phone: {comp.phone}", styles['Normal']))
-            
+
+            header_table = Table([[comp_info, logo_element]], colWidths=[350, 150])
+            header_table.setStyle(TableStyle([
+                ('VALIGN', (0,0), (-1,-1), 'TOP'),
+                ('ALIGN', (1,0), (1,0), 'RIGHT')
+            ]))
+            elements.append(header_table)
             elements.append(Spacer(1, 20))
             
-            # Invoice Info
-            elements.append(Paragraph(f"<b>INVOICE #:</b> {inv.invoice_number}", styles['Heading3']))
-            elements.append(Paragraph(f"<b>Date:</b> {inv.issue_date.strftime('%Y-%m-%d')}", styles['Normal']))
+            # --- Document Info & Bill To Table ---
+            bill_info = []
+            bill_info.append(Paragraph("<b>BILL TO:</b>", styles['Heading4']))
+            bill_info.append(Paragraph(f"<b>Name:</b> {cust.name}", styles['Normal']))
+            if cust.phone: bill_info.append(Paragraph(f"<b>Phone:</b> {cust.phone}", styles['Normal']))
+            if cust.address: bill_info.append(Paragraph(f"<b>Address:</b> {cust.address}", styles['Normal']))
             
-            elements.append(Spacer(1, 20))
+            doc_info = []
+            doc_info.append(Paragraph(f"<b>INVOICE</b>", doc_style))
             
-            # Bill To
-            elements.append(Paragraph("<b>BILL TO:</b>", styles['Heading4']))
-            elements.append(Paragraph(f"Name: {cust.name}", styles['Normal']))
-            if cust.phone: elements.append(Paragraph(f"Phone: {cust.phone}", styles['Normal']))
-            if cust.address: elements.append(Paragraph(f"Address: {cust.address}", styles['Normal']))
+            detail_data = [
+                [Paragraph("<b>Invoice #</b>", styles['Normal']), Paragraph("<b>:</b>", styles['Normal']), Paragraph(inv.invoice_number, styles['Normal'])],
+                [Paragraph("<b>Date</b>", styles['Normal']), Paragraph("<b>:</b>", styles['Normal']), Paragraph(inv.issue_date.strftime('%d-%m-%Y'), styles['Normal'])]
+            ]
+            detail_table = Table(detail_data, colWidths=[60, 10, 150])
+            detail_table.setStyle(TableStyle([
+                ('VALIGN', (0,0), (-1,-1), 'TOP'),
+                ('LEFTPADDING', (0,0), (-1,-1), 0),
+                ('RIGHTPADDING', (0,0), (-1,-1), 0),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+                ('TOPPADDING', (0,0), (-1,-1), 0),
+            ]))
+            doc_info.append(detail_table)
             
+            info_table = Table([[bill_info, "", doc_info]], colWidths=[240, 20, 240])
+            info_table.setStyle(TableStyle([
+                ('VALIGN', (0,0), (-1,-1), 'TOP'),
+                ('BACKGROUND', (0,0), (0,0), colors.HexColor("#F8FAFC")),
+                ('BACKGROUND', (2,0), (2,0), colors.HexColor("#F8FAFC")),
+                ('BOX', (0,0), (0,0), 0.5, colors.HexColor("#E2E8F0")),
+                ('BOX', (2,0), (2,0), 0.5, colors.HexColor("#E2E8F0")),
+                ('TOPPADDING', (0,0), (-1,-1), 10),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 10),
+                ('LEFTPADDING', (0,0), (-1,-1), 10),
+                ('RIGHTPADDING', (0,0), (-1,-1), 10),
+            ]))
+            elements.append(info_table)
             elements.append(Spacer(1, 20))
             
             # Items Table
@@ -100,15 +160,20 @@ class PDFGenerator:
                     f"{float(item.unit_price):.2f}",
                     f"{float(item.total_price):.2f}"
                 ])
+            # Pad with empty rows for standard table size
+            min_rows = 12
+            while len(data) <= min_rows:
+                data.append(["", "", "", "", ""])
                 
             t = Table(data, colWidths=[40, 250, 50, 70, 80])
             t.setStyle(TableStyle([
-                ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#F1F5F9")),
-                ('TEXTCOLOR', (0,0), (-1,0), colors.HexColor("#1E293B")),
                 ('ALIGN', (0,0), (-1,-1), 'CENTER'),
                 ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
                 ('BOTTOMPADDING', (0,0), (-1,0), 12),
-                ('GRID', (0,0), (-1,-1), 1, colors.HexColor("#E2E8F0")),
+                ('BOX', (0,0), (-1,-1), 1, colors.black),
+                ('LINEBELOW', (0,0), (-1,0), 1, colors.black),
+                ('LINEAFTER', (0,0), (-2,-1), 1, colors.black),
+                ('VALIGN', (0,0), (-1,-1), 'TOP'),
             ]))
             elements.append(t)
             
@@ -128,19 +193,38 @@ class PDFGenerator:
             remaining = float(inv.net_amount) - float(inv.paid_amount)
             totals.append(["Remaining:", f"{remaining:.2f}"])
             
-            t_totals = Table(totals, colWidths=[350, 140])
+            t_totals = Table(totals, colWidths=[200, 100])
             t_totals.setStyle(TableStyle([
                 ('ALIGN', (0,0), (-1,-1), 'RIGHT'),
                 ('FONTNAME', (0,-1), (-1,-1), 'Helvetica-Bold'),
+                ('BACKGROUND', (0, -3), (-1, -1), colors.HexColor("#F8FAFC")),
+                ('BOX', (0, -3), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
+                ('TOPPADDING', (0,0), (-1,-1), 5),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 5),
             ]))
-            elements.append(t_totals)
+            
+            # wrap it inside an outer table to align it to the right
+            totals_outer = Table([["", t_totals]], colWidths=[200, 300])
+            totals_outer.setStyle(TableStyle([('ALIGN', (1,0), (1,0), 'RIGHT')]))
+            elements.append(totals_outer)
             
             if inv.notes:
                 elements.append(Spacer(1, 20))
-                elements.append(Paragraph("<b>Notes:</b>", styles['Normal']))
-                elements.append(Paragraph(inv.notes, styles['Normal']))
+                notes_html = str(inv.notes).replace('\n', '<br/>')
+                p = Paragraph(notes_html, styles['Normal'])
+                notes_table = Table([[p]], colWidths=[500])
+                notes_table.setStyle(TableStyle([
+                    ('BOX', (0,0), (-1,-1), 1, colors.HexColor("#94A3B8")),
+                    ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F8FAFC")),
+                    ('TOPPADDING', (0,0), (-1,-1), 12),
+                    ('BOTTOMPADDING', (0,0), (-1,-1), 12),
+                    ('LEFTPADDING', (0,0), (-1,-1), 12),
+                    ('RIGHTPADDING', (0,0), (-1,-1), 12),
+                ]))
+                elements.append(BottomSpacer(notes_table))
+                elements.append(notes_table)
             
-            doc.build(elements)
+            doc.build(elements, onFirstPage=PDFGenerator._draw_page_border, onLaterPages=PDFGenerator._draw_page_border)
             return filepath
 
     @staticmethod
@@ -258,8 +342,8 @@ class PDFGenerator:
                 
             filename = f"Vendor_Bill_{bill.bill_number}.pdf"
             filepath = str(pdf_dir / filename)
-            
-            doc = SimpleDocTemplate(filepath, pagesize=letter)
+            from reportlab.lib.pagesizes import A4
+            doc = SimpleDocTemplate(filepath, pagesize=A4)
             elements = []
             styles = getSampleStyleSheet()
             
@@ -278,39 +362,78 @@ class PDFGenerator:
                     if os.path.exists(fallback_path):
                         logo_file = fallback_path
 
+
+            
+            from reportlab.lib.styles import ParagraphStyle
+            comp_style = ParagraphStyle('CompStyle', parent=styles['Normal'], fontSize=18, leading=22, spaceAfter=4)
+            doc_style = ParagraphStyle('DocStyle', parent=styles['Normal'], fontSize=14, leading=18, spaceAfter=4)
+            
+            # --- Header Table (Company & Logo) ---
+            comp_info = []
+            comp_info.append(Paragraph(f"<b>{comp.name}</b>", comp_style))
+            if comp.address: comp_info.append(Paragraph(comp.address, styles['Normal']))
+            if comp.phone: comp_info.append(Paragraph(f"Phone: {comp.phone}", styles['Normal']))
+            
+            logo_element = ""
             if logo_file:
                 from reportlab.platypus import Image
                 try:
-                    logo = Image(logo_file)
+                    logo_element = Image(logo_file)
                     try:
-                        aspect = logo.imageWidth / float(logo.imageHeight)
-                        logo.drawHeight = 60
-                        logo.drawWidth = 60 * aspect
+                        aspect = logo_element.imageWidth / float(logo_element.imageHeight)
+                        logo_element.drawHeight = 60
+                        logo_element.drawWidth = 60 * aspect
                     except AttributeError:
-                        logo.drawHeight = 60
-                        logo.drawWidth = 100
-                    elements.append(logo)
+                        logo_element.drawHeight = 60
+                        logo_element.drawWidth = 100
                 except Exception as e:
                     print(f"Error loading logo: {e}")
-            
-            elements.append(Paragraph(f"<b>{comp.name}</b>", styles['Heading1']))
-            if comp.address: elements.append(Paragraph(comp.address, styles['Normal']))
-            if comp.phone: elements.append(Paragraph(f"Phone: {comp.phone}", styles['Normal']))
-            
+
+            header_table = Table([[comp_info, logo_element]], colWidths=[350, 150])
+            header_table.setStyle(TableStyle([
+                ('VALIGN', (0,0), (-1,-1), 'TOP'),
+                ('ALIGN', (1,0), (1,0), 'RIGHT')
+            ]))
+            elements.append(header_table)
             elements.append(Spacer(1, 20))
             
-            # Bill Info
-            elements.append(Paragraph(f"<b>VENDOR BILL #:</b> {bill.bill_number}", styles['Heading3']))
-            elements.append(Paragraph(f"<b>Date:</b> {bill.bill_date.strftime('%Y-%m-%d')}", styles['Normal']))
+            # --- Document Info & Vendor Details Table ---
+            vend_info = []
+            vend_info.append(Paragraph("<b>VENDOR DETAILS:</b>", styles['Heading4']))
+            vend_info.append(Paragraph(f"<b>Name:</b> {vend.name}", styles['Normal']))
+            if vend.phone: vend_info.append(Paragraph(f"<b>Phone:</b> {vend.phone}", styles['Normal']))
+            if vend.address: vend_info.append(Paragraph(f"<b>Address:</b> {vend.address}", styles['Normal']))
             
-            elements.append(Spacer(1, 20))
+            doc_info = []
+            doc_info.append(Paragraph(f"<b>VENDOR BILL</b>", doc_style))
             
-            # Vendor To
-            elements.append(Paragraph("<b>VENDOR DETAILS:</b>", styles['Heading4']))
-            elements.append(Paragraph(f"Name: {vend.name}", styles['Normal']))
-            if vend.phone: elements.append(Paragraph(f"Phone: {vend.phone}", styles['Normal']))
-            if vend.address: elements.append(Paragraph(f"Address: {vend.address}", styles['Normal']))
+            detail_data = [
+                [Paragraph("<b>Bill #</b>", styles['Normal']), Paragraph("<b>:</b>", styles['Normal']), Paragraph(bill.bill_number, styles['Normal'])],
+                [Paragraph("<b>Date</b>", styles['Normal']), Paragraph("<b>:</b>", styles['Normal']), Paragraph(bill.bill_date.strftime('%d-%m-%Y'), styles['Normal'])]
+            ]
+            detail_table = Table(detail_data, colWidths=[60, 10, 150])
+            detail_table.setStyle(TableStyle([
+                ('VALIGN', (0,0), (-1,-1), 'TOP'),
+                ('LEFTPADDING', (0,0), (-1,-1), 0),
+                ('RIGHTPADDING', (0,0), (-1,-1), 0),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+                ('TOPPADDING', (0,0), (-1,-1), 0),
+            ]))
+            doc_info.append(detail_table)
             
+            info_table = Table([[vend_info, "", doc_info]], colWidths=[240, 20, 240])
+            info_table.setStyle(TableStyle([
+                ('VALIGN', (0,0), (-1,-1), 'TOP'),
+                ('BACKGROUND', (0,0), (0,0), colors.HexColor("#F8FAFC")),
+                ('BACKGROUND', (2,0), (2,0), colors.HexColor("#F8FAFC")),
+                ('BOX', (0,0), (0,0), 0.5, colors.HexColor("#E2E8F0")),
+                ('BOX', (2,0), (2,0), 0.5, colors.HexColor("#E2E8F0")),
+                ('TOPPADDING', (0,0), (-1,-1), 10),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 10),
+                ('LEFTPADDING', (0,0), (-1,-1), 10),
+                ('RIGHTPADDING', (0,0), (-1,-1), 10),
+            ]))
+            elements.append(info_table)
             elements.append(Spacer(1, 20))
             
             # Items Table
@@ -322,15 +445,19 @@ class PDFGenerator:
                 desc_p,
                 f"{float(bill.amount):.2f}"
             ])
+            # Pad with empty rows for standard table size
+            min_rows = 12
+            while len(data) <= min_rows:
+                data.append(["", ""])
                 
             t = Table(data, colWidths=[350, 100])
             t.setStyle(TableStyle([
-                ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#F1F5F9")),
-                ('TEXTCOLOR', (0,0), (-1,0), colors.HexColor("#1E293B")),
                 ('ALIGN', (0,0), (-1,-1), 'CENTER'),
                 ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
                 ('BOTTOMPADDING', (0,0), (-1,0), 12),
-                ('GRID', (0,0), (-1,-1), 1, colors.HexColor("#E2E8F0")),
+                ('BOX', (0,0), (-1,-1), 1, colors.black),
+                ('LINEBELOW', (0,0), (-1,0), 1, colors.black),
+                ('LINEAFTER', (0,0), (-2,-1), 1, colors.black),
                 ('VALIGN', (0,0), (-1,-1), 'TOP'),
             ]))
             elements.append(t)
@@ -342,14 +469,36 @@ class PDFGenerator:
                 ["Total Amount:", f"{float(bill.amount):.2f}"]
             ]
             
-            t_totals = Table(totals, colWidths=[350, 100])
+            t_totals = Table(totals, colWidths=[200, 100])
             t_totals.setStyle(TableStyle([
                 ('ALIGN', (0,0), (-1,-1), 'RIGHT'),
                 ('FONTNAME', (0,-1), (-1,-1), 'Helvetica-Bold'),
+                ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#F8FAFC")),
+                ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
+                ('TOPPADDING', (0,0), (-1,-1), 5),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 5),
             ]))
-            elements.append(t_totals)
+            totals_outer = Table([["", t_totals]], colWidths=[200, 300])
+            totals_outer.setStyle(TableStyle([('ALIGN', (1,0), (1,0), 'RIGHT')]))
+            elements.append(totals_outer)
             
-            doc.build(elements)
+            if bill.description:
+                elements.append(Spacer(1, 20))
+                desc_html = str(bill.description).replace('\n', '<br/>')
+                p = Paragraph(desc_html, styles['Normal'])
+                notes_table = Table([[p]], colWidths=[450])
+                notes_table.setStyle(TableStyle([
+                    ('BOX', (0,0), (-1,-1), 1, colors.HexColor("#94A3B8")),
+                    ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F8FAFC")),
+                    ('TOPPADDING', (0,0), (-1,-1), 12),
+                    ('BOTTOMPADDING', (0,0), (-1,-1), 12),
+                    ('LEFTPADDING', (0,0), (-1,-1), 12),
+                    ('RIGHTPADDING', (0,0), (-1,-1), 12),
+                ]))
+                elements.append(BottomSpacer(notes_table))
+                elements.append(notes_table)
+
+            doc.build(elements, onFirstPage=PDFGenerator._draw_page_border, onLaterPages=PDFGenerator._draw_page_border)
             return filepath
 
     @staticmethod
@@ -471,7 +620,8 @@ class PDFGenerator:
             filename = f"{quot.quotation_number}.pdf"
             filepath = str(pdf_dir / filename)
 
-            doc = SimpleDocTemplate(filepath, pagesize=letter)
+            from reportlab.lib.pagesizes import A4
+            doc = SimpleDocTemplate(filepath, pagesize=A4)
             elements = []
             styles = getSampleStyleSheet()
 
@@ -490,43 +640,85 @@ class PDFGenerator:
                     if os.path.exists(fallback):
                         logo_file = fallback
 
+
+
+            from reportlab.lib.styles import ParagraphStyle
+            comp_style = ParagraphStyle('CompStyle', parent=styles['Normal'], fontSize=18, leading=22, spaceAfter=4)
+            doc_style = ParagraphStyle('DocStyle', parent=styles['Normal'], fontSize=14, leading=18, spaceAfter=4)
+
+            # --- Header Table (Company & Logo) ---
+            comp_info = []
+            comp_info.append(Paragraph(f"<b>{comp.name}</b>", comp_style))
+            if comp.address:
+                comp_info.append(Paragraph(comp.address, styles['Normal']))
+            if comp.phone:
+                comp_info.append(Paragraph(f"Phone: {comp.phone}", styles['Normal']))
+
+            logo_element = ""
             if logo_file:
                 from reportlab.platypus import Image
                 try:
-                    logo = Image(logo_file)
+                    logo_element = Image(logo_file)
                     try:
-                        aspect = logo.imageWidth / float(logo.imageHeight)
-                        logo.drawHeight = 60
-                        logo.drawWidth = 60 * aspect
+                        aspect = logo_element.imageWidth / float(logo_element.imageHeight)
+                        logo_element.drawHeight = 60
+                        logo_element.drawWidth = 60 * aspect
                     except AttributeError:
-                        logo.drawHeight = 60
-                        logo.drawWidth = 100
-                    elements.append(logo)
+                        logo_element.drawHeight = 60
+                        logo_element.drawWidth = 100
                 except Exception as e:
                     print(f"Error loading logo: {e}")
 
-            elements.append(Paragraph(f"<b>{comp.name}</b>", styles['Heading1']))
-            if comp.address:
-                elements.append(Paragraph(comp.address, styles['Normal']))
-            if comp.phone:
-                elements.append(Paragraph(f"Phone: {comp.phone}", styles['Normal']))
-
+            header_table = Table([[comp_info, logo_element]], colWidths=[350, 150])
+            header_table.setStyle(TableStyle([
+                ('VALIGN', (0,0), (-1,-1), 'TOP'),
+                ('ALIGN', (1,0), (1,0), 'RIGHT')
+            ]))
+            elements.append(header_table)
             elements.append(Spacer(1, 20))
 
-            elements.append(Paragraph(f"<b>QUOTATION #:</b> {quot.quotation_number}", styles['Heading3']))
-            elements.append(Paragraph(f"<b>Date:</b> {quot.issue_date.strftime('%Y-%m-%d')}", styles['Normal']))
-            if quot.valid_until:
-                elements.append(Paragraph(f"<b>Valid Until:</b> {quot.valid_until.strftime('%Y-%m-%d')}", styles['Normal']))
-
-            elements.append(Spacer(1, 20))
-
-            elements.append(Paragraph("<b>QUOTATION FOR:</b>", styles['Heading4']))
-            elements.append(Paragraph(f"Name: {cust.name}", styles['Normal']))
+            # --- Document Info & Bill To Table ---
+            bill_info = []
+            bill_info.append(Paragraph("<b>QUOTATION FOR:</b>", styles['Heading4']))
+            bill_info.append(Paragraph(f"<b>Name:</b> {cust.name}", styles['Normal']))
             if cust.phone:
-                elements.append(Paragraph(f"Phone: {cust.phone}", styles['Normal']))
+                bill_info.append(Paragraph(f"<b>Phone:</b> {cust.phone}", styles['Normal']))
             if cust.address:
-                elements.append(Paragraph(f"Address: {cust.address}", styles['Normal']))
+                bill_info.append(Paragraph(f"<b>Address:</b> {cust.address}", styles['Normal']))
 
+            doc_info = []
+            doc_info.append(Paragraph(f"<b>QUOTATION</b>", doc_style))
+            
+            detail_data = [
+                [Paragraph("<b>Quotation #</b>", styles['Normal']), Paragraph("<b>:</b>", styles['Normal']), Paragraph(quot.quotation_number, styles['Normal'])],
+                [Paragraph("<b>Date</b>", styles['Normal']), Paragraph("<b>:</b>", styles['Normal']), Paragraph(quot.issue_date.strftime('%d-%m-%Y'), styles['Normal'])]
+            ]
+            if quot.valid_until:
+                detail_data.append([Paragraph("<b>Valid Until</b>", styles['Normal']), Paragraph("<b>:</b>", styles['Normal']), Paragraph(quot.valid_until.strftime('%d-%m-%Y'), styles['Normal'])])
+                
+            detail_table = Table(detail_data, colWidths=[70, 10, 140])
+            detail_table.setStyle(TableStyle([
+                ('VALIGN', (0,0), (-1,-1), 'TOP'),
+                ('LEFTPADDING', (0,0), (-1,-1), 0),
+                ('RIGHTPADDING', (0,0), (-1,-1), 0),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+                ('TOPPADDING', (0,0), (-1,-1), 0),
+            ]))
+            doc_info.append(detail_table)
+
+            info_table = Table([[bill_info, "", doc_info]], colWidths=[240, 20, 240])
+            info_table.setStyle(TableStyle([
+                ('VALIGN', (0,0), (-1,-1), 'TOP'),
+                ('BACKGROUND', (0,0), (0,0), colors.HexColor("#F8FAFC")),
+                ('BACKGROUND', (2,0), (2,0), colors.HexColor("#F8FAFC")),
+                ('BOX', (0,0), (0,0), 0.5, colors.HexColor("#E2E8F0")),
+                ('BOX', (2,0), (2,0), 0.5, colors.HexColor("#E2E8F0")),
+                ('TOPPADDING', (0,0), (-1,-1), 10),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 10),
+                ('LEFTPADDING', (0,0), (-1,-1), 10),
+                ('RIGHTPADDING', (0,0), (-1,-1), 10),
+            ]))
+            elements.append(info_table)
             elements.append(Spacer(1, 20))
 
             # Items Table — use Paragraph for description to prevent overflow
@@ -545,16 +737,19 @@ class PDFGenerator:
                     f"{float(item.total_price):.2f}",
                 ])
 
+            min_rows = 12
+            while len(data) <= min_rows:
+                data.append(["", "", "", "", ""])
+
             t = Table(data, colWidths=[40, 250, 50, 70, 80])
             t.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#F1F5F9")),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor("#1E293B")),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('ALIGN', (1, 1), (1, -1), 'LEFT'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('GRID', (0, 0), (-1, -1), 1, colors.HexColor("#E2E8F0")),
-                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+                ('BOTTOMPADDING', (0,0), (-1,0), 12),
+                ('BOX', (0,0), (-1,-1), 1, colors.black),
+                ('LINEBELOW', (0,0), (-1,0), 1, colors.black),
+                ('LINEAFTER', (0,0), (-2,-1), 1, colors.black),
+                ('VALIGN', (0,0), (-1,-1), 'TOP'),
             ]))
             elements.append(t)
             elements.append(Spacer(1, 20))
@@ -567,19 +762,36 @@ class PDFGenerator:
                 totals.append([f"Tax ({float(quot.tax_percentage)}%):", f"{float(quot.tax_amount):.2f}"])
             totals.append(["Net Total:", f"{float(quot.net_amount):.2f}"])
 
-            t_totals = Table(totals, colWidths=[350, 140])
+            t_totals = Table(totals, colWidths=[200, 100])
             t_totals.setStyle(TableStyle([
                 ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
                 ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+                ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor("#F8FAFC")),
+                ('BOX', (0, -1), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
+                ('TOPPADDING', (0,0), (-1,-1), 5),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 5),
             ]))
-            elements.append(t_totals)
+            totals_outer = Table([["", t_totals]], colWidths=[200, 300])
+            totals_outer.setStyle(TableStyle([('ALIGN', (1,0), (1,0), 'RIGHT')]))
+            elements.append(totals_outer)
 
             if quot.notes:
                 elements.append(Spacer(1, 20))
-                elements.append(Paragraph("<b>Notes:</b>", styles['Normal']))
-                elements.append(Paragraph(quot.notes, styles['Normal']))
+                notes_html = str(quot.notes).replace('\n', '<br/>')
+                p = Paragraph(notes_html, styles['Normal'])
+                notes_table = Table([[p]], colWidths=[500])
+                notes_table.setStyle(TableStyle([
+                    ('BOX', (0,0), (-1,-1), 1, colors.HexColor("#94A3B8")),
+                    ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F8FAFC")),
+                    ('TOPPADDING', (0,0), (-1,-1), 12),
+                    ('BOTTOMPADDING', (0,0), (-1,-1), 12),
+                    ('LEFTPADDING', (0,0), (-1,-1), 12),
+                    ('RIGHTPADDING', (0,0), (-1,-1), 12),
+                ]))
+                elements.append(BottomSpacer(notes_table))
+                elements.append(notes_table)
 
-            doc.build(elements)
+            doc.build(elements, onFirstPage=PDFGenerator._draw_page_border, onLaterPages=PDFGenerator._draw_page_border)
             return filepath
 
     @staticmethod
@@ -605,7 +817,8 @@ class PDFGenerator:
             filename = f"Statement_{cust_name}_{s_date_str}_to_{e_date_str}.pdf"
             filepath = os.path.join(pdf_dir, filename)
 
-            doc = SimpleDocTemplate(filepath, pagesize=letter)
+            from reportlab.lib.pagesizes import A4
+            doc = SimpleDocTemplate(filepath, pagesize=A4, rightMargin=25, leftMargin=25, topMargin=36, bottomMargin=36)
             elements = []
             styles = getSampleStyleSheet()
 
@@ -616,7 +829,7 @@ class PDFGenerator:
             s_print = start_date.strftime("%Y-%m-%d") if hasattr(start_date, 'strftime') else str(start_date)
             e_print = end_date.strftime("%Y-%m-%d") if hasattr(end_date, 'strftime') else str(end_date)
             elements.append(Paragraph(f"Period: {s_print} to {e_print}", styles['Normal']))
-            
+
             from datetime import datetime
             elements.append(Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", styles['Normal']))
             elements.append(Spacer(1, 15))
@@ -638,8 +851,8 @@ class PDFGenerator:
                 
                 data.append([
                     dt_val,
-                    type_text,
-                    _safe_str(row.get("ref", "")),
+                    _para(type_text),
+                    _para(_safe_str(row.get("ref", ""))),
                     _para(desc_text),
                     f"{row['debit']:.2f}",
                     f"{row['credit']:.2f}",
@@ -649,7 +862,7 @@ class PDFGenerator:
             if len(data) == 1:
                 elements.append(Paragraph("No transactions for this period.", styles['Normal']))
             else:
-                t = Table(data, colWidths=[65, 75, 75, 125, 65, 65, 75])
+                t = Table(data, colWidths=[65, 65, 105, 120, 60, 60, 70])
                 t.setStyle(TableStyle([
                     ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#2C3E50")),
                     ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
@@ -670,3 +883,73 @@ class PDFGenerator:
 
             doc.build(elements)
             return filepath
+
+    @staticmethod
+    def generate_individual_salary_slip(company_id: int, employee: dict) -> str:
+        from database.session import SessionLocal
+        from models.company import Company
+        from datetime import datetime
+        from reportlab.lib.pagesizes import A5, landscape
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.lib import colors
+        from pathlib import Path
+        import os
+        
+        with SessionLocal() as s:
+            comp = s.query(Company).filter(Company.id == company_id).first()
+            if not comp:
+                raise ValueError("Company not found.")
+                
+            pdf_dir = Path.home() / "Desktop" / "Employee_Salaries" / "Slips" / comp.name.replace(" ", "_")
+            pdf_dir.mkdir(parents=True, exist_ok=True)
+                
+            report_date = datetime.now()
+            month_str = report_date.strftime("%B %Y")
+            emp_name_safe = employee['name'].replace(" ", "_")
+            filename = f"Salary_Slip_{emp_name_safe}_{month_str.replace(' ', '_')}.pdf"
+            filepath = str(pdf_dir / filename)
+            
+            doc = SimpleDocTemplate(filepath, pagesize=landscape(A5), rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+            elements = []
+            styles = getSampleStyleSheet()
+            
+            # Header
+            elements.append(Paragraph(f"<b>{comp.name}</b>", styles['Heading2']))
+            elements.append(Spacer(1, 10))
+            
+            elements.append(Paragraph(f"<b>Salary Slip</b> - {month_str}", styles['Heading3']))
+            elements.append(Spacer(1, 15))
+            
+            # Employee Details
+            elements.append(Paragraph(f"<b>Employee Name:</b> {employee['name']}", styles['Normal']))
+            elements.append(Spacer(1, 15))
+            
+            # Salary Table
+            data = [
+                ["Description", "Amount"],
+                ["Basic Monthly Salary", f"{employee['salary']:.2f}"],
+                ["Advance Taken", f"{employee['current_advance']:.2f}"],
+                ["Net Salary Payable", f"{employee['net_salary']:.2f}"]
+            ]
+            
+            t = Table(data, colWidths=[250, 150])
+            t.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#2C3E50")),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 12),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor("#F8FAFC")),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
+                ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'), # bold net salary
+            ]))
+            elements.append(t)
+            
+            elements.append(Spacer(1, 30))
+            elements.append(Paragraph("Generated by K Dynamics System", styles['Normal']))
+            
+            doc.build(elements)
+            return filepath
+
