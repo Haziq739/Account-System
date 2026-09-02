@@ -296,7 +296,7 @@ class VendorBillsPage(QWidget):
             return
             
         vendors = VendorService.get_vendors(self.active_company_id)
-        dlg = CreateBillDialog(self, vendors=vendors, bill_data=bill)
+        dlg = CreateBillDialog(self, vendors=vendors, bill_data=bill, company_id=self.active_company_id)
         
         if dlg.exec():
             data = dlg.get_data()
@@ -308,8 +308,9 @@ class VendorBillsPage(QWidget):
                 return
                 
             try:
+                new_comp_id = data.get("company_id") or self.active_company_id
                 success = VendorBillService.update_bill(
-                    company_id=self.active_company_id,
+                    company_id=new_comp_id,
                     bill_id=bill_id,
                     vendor_id=data["vendor_id"],
                     description=data["description"],

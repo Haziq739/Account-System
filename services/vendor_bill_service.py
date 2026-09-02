@@ -19,8 +19,18 @@ class VendorBillService:
                 elif "K Dynamics" in comp.name:
                     prefix = "KDB"
             
-            count = s.query(VendorBill).filter(VendorBill.company_id == company_id).count()
-            seq = count + 1
+            bills = s.query(VendorBill.bill_number).filter(VendorBill.bill_number.like(f"{prefix}-%")).all()
+            max_seq = 0
+            for (b_num,) in bills:
+                if b_num and b_num.startswith(f"{prefix}-"):
+                    try:
+                        seq = int(b_num.split('-')[-1])
+                        if seq > max_seq:
+                            max_seq = seq
+                    except ValueError:
+                        pass
+                        
+            seq = max_seq + 1
             return f"{prefix}-{seq:03d}"
 
     @staticmethod
@@ -104,12 +114,40 @@ class VendorBillService:
         with SessionLocal() as s:
             b = s.query(VendorBill).filter(
                 VendorBill.id == bill_id,
-                VendorBill.company_id == company_id,
                 VendorBill.is_deleted == False
             ).first()
             
             if not b:
                 return False
+                
+            if b.company_id != company_id:
+                old_comp_id = b.company_id
+                b.company_id = company_id
+                
+                from models.vendor import Vendor
+                v = s.query(Vendor).filter(Vendor.id == vendor_id).first()
+                if v and v.company_id != company_id:
+                    new_vend = s.query(Vendor).filter(Vendor.company_id == company_id, Vendor.name == v.name).first()
+                    if not new_vend:
+                        new_vend = Vendor(
+                            company_id=company_id,
+                            name=v.name,
+                            phone=v.phone,
+                            address=v.address
+                        )
+                        s.add(new_vend)
+                        s.flush()
+                    vendor_id = new_vend.id
+                    
+                from models.expense import Expense
+                exp = s.query(Expense).filter(
+                    Expense.company_id == old_comp_id,
+                    Expense.title == f"Vendor Bill {b.bill_number}",
+                    Expense.is_deleted == False
+                ).first()
+                if exp:
+                    exp.company_id = company_id
+                    exp.vendor_id = vendor_id
                 
             b.vendor_id = vendor_id
             b.description = description

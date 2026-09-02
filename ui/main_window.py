@@ -142,7 +142,11 @@ class MainWindow(QMainWindow):
         
         # Determine initial company ID from header
         if self.header.companies:
-            self.active_company_id = self.header.companies[0]["id"]
+            rn_comp = next((c for c in self.header.companies if "RN Scanner" in c["name"]), None)
+            if rn_comp:
+                self.active_company_id = rn_comp["id"]
+            else:
+                self.active_company_id = self.header.companies[0]["id"]
             
         from ui.pages.dashboard_page import DashboardPage
         self.dashboard_page = DashboardPage(self.active_company_id)

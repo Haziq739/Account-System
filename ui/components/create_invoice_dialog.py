@@ -105,6 +105,7 @@ class CreateInvoiceDialog(QDialog):
 
     def _load_data(self):
         with SessionLocal() as s:
+            self.all_companies = [{"id": c.id, "name": c.name} for c in s.query(Company).all()]
             comp = s.query(Company).filter(Company.id == self.company_id).first()
             if comp:
                 self.tax_enabled = comp.tax_enabled
@@ -125,6 +126,11 @@ class CreateInvoiceDialog(QDialog):
             from PySide6.QtWidgets import QListView, QStyledItemDelegate
             cb.setMaxVisibleItems(7)
             v = QListView()
+            v.setStyleSheet(f"""
+                QListView {{ outline: 0px; padding-top: 3px; padding-bottom: 0px; padding-left: 1px; padding-right: 1px; margin: 0px; background-color: {COLORS['bg_card']}; color: {COLORS['text_primary']}; border: 1px solid {COLORS['border']}; border-radius: 0px; }}
+                QListView::item {{ padding: 8px; border: none; }}
+                QListView::item:selected, QListView::item:hover {{ background-color: {COLORS['primary']}; color: white; border: none; }}
+            """)
             cb.setView(v)
             cb.setItemDelegate(QStyledItemDelegate())
         root = QVBoxLayout(self)
@@ -133,6 +139,23 @@ class CreateInvoiceDialog(QDialog):
         
         # ── Top Section: Customer & Category ───────────────────────
         top_layout = QHBoxLayout()
+        
+        # Company (Only in Edit mode)
+        if self.invoice_id:
+            comp_layout = QVBoxLayout()
+            comp_layout.addWidget(QLabel("Company *"))
+            self.company_cb = QComboBox()
+            _fix_cb(self.company_cb)
+            self.company_cb.setEditable(True)
+            self.company_cb.lineEdit().setReadOnly(True)
+            self.company_cb.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+            for c in self.all_companies:
+                self.company_cb.addItem(c["name"], c["id"])
+            idx = self.company_cb.findData(self.company_id)
+            if idx >= 0: self.company_cb.setCurrentIndex(idx)
+            self.company_cb.currentIndexChanged.connect(self._on_company_changed)
+            comp_layout.addWidget(self.company_cb)
+            top_layout.addLayout(comp_layout)
         
         # Customer
         cust_layout = QVBoxLayout()
@@ -586,7 +609,7 @@ class CreateInvoiceDialog(QDialog):
         try:
             if self.invoice_id:
                 InvoiceService.update_invoice(
-                    self.invoice_id, cust_id, self.items_data, disc, tax, notes, self.current_user["id"]
+                    self.invoice_id, self.company_id, cust_id, self.items_data, disc, tax, notes, self.current_user["id"]
                 )
                 show_message(self, "success", "Success", "Invoice updated successfully!")
                 self._auto_save_invoice_pdf(self.invoice_id)
@@ -624,6 +647,53 @@ class CreateInvoiceDialog(QDialog):
                 except Exception as e:
                     logger.error(f"Failed to auto-save invoice PDF: {e}")
                     
+                    
         # keep a reference to prevent garbage collection
         self._pdf_worker = InvoicePDFWorker(inv_id)
         self._pdf_worker.start()
+
+    def _on_company_changed(self):
+        new_comp_id = self.company_cb.currentData()
+        if new_comp_id and new_comp_id != self.company_id:
+            self.company_id = new_comp_id
+            self._load_data()
+            
+            # Repopulate customer cb
+            prev_cust = self.customer_cb.currentData()
+            prev_cust_text = self.customer_cb.currentText()
+            self.customer_cb.clear()
+            for c in self.customers:
+                display_name = f"{c['name']} ({c['phone']})" if c.get('phone') else c['name']
+                self.customer_cb.addItem(display_name, c['id'])
+            if prev_cust:
+                idx = self.customer_cb.findData(prev_cust)
+                if idx >= 0: 
+                    self.customer_cb.setCurrentIndex(idx)
+                else:
+                    self.customer_cb.addItem(prev_cust_text, prev_cust)
+                    self.customer_cb.setCurrentIndex(self.customer_cb.count() - 1)
+                
+            # Repopulate service cb
+            self.filtered_services = self.all_services
+            self._populate_service_cb()
+            
+            # Update items in table
+            for r in range(self.table.rowCount()):
+                srv_cb = self.table.cellWidget(r, 1)
+                if srv_cb:
+                    prev_id = srv_cb.currentData()
+                    prev_text = srv_cb.currentText()
+                    srv_cb.blockSignals(True)
+                    srv_cb.clear()
+                    for s in self.filtered_services:
+                        srv_cb.addItem(s["name"], s["id"])
+                    if prev_id:
+                        idx = srv_cb.findData(prev_id)
+                        if idx >= 0: 
+                            srv_cb.setCurrentIndex(idx)
+                        else:
+                            srv_cb.addItem(prev_text, prev_id)
+                            srv_cb.setCurrentIndex(srv_cb.count() - 1)
+                    srv_cb.blockSignals(False)
+            self._calculate_totals()
+

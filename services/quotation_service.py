@@ -21,8 +21,18 @@ class QuotationService:
                 elif "K Dynamics" in comp.name:
                     prefix = "Quotation-KD"
             
-            count = s.query(Quotation).filter(Quotation.company_id == company_id).count()
-            seq = count + 1
+            quotations = s.query(Quotation.quotation_number).filter(Quotation.quotation_number.like(f"{prefix}-%")).all()
+            max_seq = 0
+            for (q_num,) in quotations:
+                if q_num and q_num.startswith(f"{prefix}-"):
+                    try:
+                        seq = int(q_num.split('-')[-1])
+                        if seq > max_seq:
+                            max_seq = seq
+                    except ValueError:
+                        pass
+                        
+            seq = max_seq + 1
             return f"{prefix}-{seq:03d}"
 
     @staticmethod
@@ -157,6 +167,7 @@ class QuotationService:
     @staticmethod
     def update_quotation(
         quotation_id: int,
+        company_id: int,
         customer_id: int,
         items: List[Dict[str, Any]], 
         discount: float,
@@ -168,6 +179,53 @@ class QuotationService:
             q = s.query(Quotation).filter(Quotation.id == quotation_id).first()
             if not q:
                 return False
+                
+            # Migrate company if changed
+            if q.company_id != company_id:
+                q.company_id = company_id
+                
+                # Migrate Customer and their Ledgers
+                from models.customer import Customer
+                from models.ledger import CustomerLedger
+                from models.payment import Payment
+                
+                cust = s.query(Customer).filter(Customer.id == customer_id).first()
+                if cust and cust.company_id != company_id:
+                    new_cust = s.query(Customer).filter(Customer.company_id == company_id, Customer.name == cust.name).first()
+                    if not new_cust:
+                        new_cust = Customer(
+                            company_id=company_id,
+                            name=cust.name,
+                            phone=cust.phone,
+                            email=cust.email,
+                            address=cust.address,
+                            company_name=cust.company_name,
+                            customer_type=cust.customer_type
+                        )
+                        s.add(new_cust)
+                        s.flush()
+                    customer_id = new_cust.id
+                    
+                    # Update ONLY ledgers/payments for THIS quotation if they existed (usually they don't, but just in case)
+                    s.query(CustomerLedger).filter(CustomerLedger.reference_id == q.quotation_number).update({"company_id": company_id, "customer_id": customer_id})
+                    
+                # Migrate Services
+                from models.service import Service
+                for item in items:
+                    srv = s.query(Service).filter(Service.id == item["service_id"]).first()
+                    if srv and srv.company_id != company_id:
+                        new_srv = s.query(Service).filter(Service.company_id == company_id, Service.name == srv.name).first()
+                        if not new_srv:
+                            new_srv = Service(
+                                company_id=company_id,
+                                category=srv.category,
+                                name=srv.name,
+                                description=srv.description,
+                                default_price=srv.default_price
+                            )
+                            s.add(new_srv)
+                            s.flush()
+                        item["service_id"] = new_srv.id
                 
             # Clear old items
             s.query(QuotationItem).filter(QuotationItem.quotation_id == quotation_id).delete()

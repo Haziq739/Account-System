@@ -1,10 +1,10 @@
 [Setup]
 AppName=RN Scanner and Digital Print House
-AppVersion=1.0.1
+AppVersion=1.0.2
 DefaultDirName={autopf}\K_Dynamics_System
 DefaultGroupName=RN Scanner
 OutputDir=Output
-OutputBaseFilename=K_Dynamics_System_Setup_v1.0.1
+OutputBaseFilename=K_Dynamics_System_Setup_v1.0.2
 SetupIconFile=assets\k_dynamics_logo.ico
 Compression=lzma2
 SolidCompression=yes

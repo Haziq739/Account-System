@@ -105,7 +105,7 @@ class LoginWindow(QWidget):
 
         outer.addWidget(card)
 
-        footer = QLabel("RN Scanner and Digital Print House  •  v1.0.0")
+        footer = QLabel("RN Scanner and Digital Print House  •  v1.0.2")
         footer.setStyleSheet(
             f"color: {COLORS['text_muted']}; font-size: 10px; background: transparent; margin-top: 10px;"
         )

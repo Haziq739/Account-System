@@ -29,6 +29,18 @@ def _label(text: str) -> QLabel:
     lbl.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 13px; font-weight: 600; background: transparent;")
     return lbl
 
+def _fix_cb(cb):
+    from PySide6.QtWidgets import QListView, QStyledItemDelegate
+    cb.setMaxVisibleItems(7)
+    v = QListView()
+    v.setStyleSheet(f"""
+        QListView {{ outline: 0px; padding-top: 3px; padding-bottom: 0px; padding-left: 1px; padding-right: 1px; margin: 0px; background-color: {COLORS['bg_card']}; color: {COLORS['text_primary']}; border: 1px solid {COLORS['border']}; border-radius: 0px; }}
+        QListView::item {{ padding: 8px; border: none; }}
+        QListView::item:selected, QListView::item:hover {{ background-color: {COLORS['primary']}; color: white; border: none; }}
+    """)
+    cb.setView(v)
+    cb.setItemDelegate(QStyledItemDelegate())
+
 class VendorFormDialog(QDialog):
     """Dialog to Add or Edit a vendor."""
     def __init__(self, parent=None, vendor_data=None):
@@ -98,9 +110,8 @@ class VendorFormDialog(QDialog):
         
         layout.addStretch()
         
-        btn_layout = QGridLayout()
-        btn_layout.setColumnStretch(0, 1)
-        btn_layout.setColumnStretch(1, 1)
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch()
         
         cancel_btn = _btn("Cancel")
         cancel_btn.clicked.connect(self.reject)
@@ -110,11 +121,12 @@ class VendorFormDialog(QDialog):
         save_btn.setAutoDefault(False)
         save_btn.setDefault(False)
         
-        cancel_btn.setFixedSize(160, 38)
-        save_btn.setFixedSize(160, 38)
+        cancel_btn.setFixedSize(140, 38)
+        save_btn.setFixedSize(140, 38)
         
-        btn_layout.addWidget(cancel_btn, 0, 0)
-        btn_layout.addWidget(save_btn, 0, 1)
+        btn_layout.addWidget(cancel_btn)
+        btn_layout.addWidget(save_btn)
+        btn_layout.addStretch()
         
         layout.addLayout(btn_layout)
 
@@ -168,14 +180,22 @@ class VendorFormDialog(QDialog):
 
 class CreateBillDialog(QDialog):
     """Dialog to Create or Edit a Vendor Bill."""
-    def __init__(self, parent=None, vendors=None, bill_data=None):
+    def __init__(self, parent=None, vendors=None, bill_data=None, company_id=None):
         super().__init__(parent)
         self.vendors = vendors or []
         self.is_edit = bool(bill_data)
         self.bill_data = bill_data or {}
+        self.company_id = company_id
+        
+        self.all_companies = []
+        if self.is_edit and self.company_id:
+            from database.session import SessionLocal
+            from models.company import Company
+            with SessionLocal() as s:
+                self.all_companies = [{"id": c.id, "name": c.name} for c in s.query(Company).all()]
         
         self.setWindowTitle("Edit Bill" if self.is_edit else "Create New Bill")
-        self.setFixedSize(460, 560)
+        self.setFixedSize(460, 640 if self.is_edit else 560)
         self.setStyleSheet(f"""
             QDialog {{ background-color: {COLORS['bg_card']}; }}
             QLineEdit, QTextEdit, QComboBox, QCompleter, QListView, QDoubleSpinBox, QDateEdit {{
@@ -266,6 +286,20 @@ class CreateBillDialog(QDialog):
         title.setStyleSheet(f"color: {COLORS['text_primary']}; font-size: 20px; font-weight: 700; background: transparent;")
         layout.addWidget(title)
         
+        if self.is_edit and self.all_companies:
+            layout.addWidget(_label("Company *"))
+            self.company_cb = QComboBox()
+            _fix_cb(self.company_cb)
+            self.company_cb.setEditable(True)
+            self.company_cb.lineEdit().setReadOnly(True)
+            self.company_cb.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+            for c in self.all_companies:
+                self.company_cb.addItem(c["name"], c["id"])
+            idx = self.company_cb.findData(self.company_id)
+            if idx >= 0: self.company_cb.setCurrentIndex(idx)
+            self.company_cb.currentIndexChanged.connect(self._on_company_changed)
+            layout.addWidget(self.company_cb)
+        
         layout.addWidget(_label("Vendor *"))
         layout.addWidget(self.vendor_cb)
         
@@ -280,9 +314,8 @@ class CreateBillDialog(QDialog):
         
         layout.addStretch()
         
-        btn_layout = QGridLayout()
-        btn_layout.setColumnStretch(0, 1)
-        btn_layout.setColumnStretch(1, 1)
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch()
         
         cancel_btn = _btn("Cancel")
         cancel_btn.clicked.connect(self.reject)
@@ -292,11 +325,12 @@ class CreateBillDialog(QDialog):
         save_btn.setAutoDefault(False)
         save_btn.setDefault(False)
         
-        cancel_btn.setFixedSize(160, 38)
-        save_btn.setFixedSize(160, 38)
+        cancel_btn.setFixedSize(140, 38)
+        save_btn.setFixedSize(140, 38)
         
-        btn_layout.addWidget(cancel_btn, 0, 0)
-        btn_layout.addWidget(save_btn, 0, 1)
+        btn_layout.addWidget(cancel_btn)
+        btn_layout.addWidget(save_btn)
+        btn_layout.addStretch()
         
         layout.addLayout(btn_layout)
 
@@ -314,6 +348,30 @@ class CreateBillDialog(QDialog):
             return
             
         self.accept()
+
+    def _on_company_changed(self):
+        new_comp_id = self.company_cb.currentData()
+        if new_comp_id and new_comp_id != self.company_id:
+            self.company_id = new_comp_id
+            
+            from services.vendor_service import VendorService
+            self.vendors = VendorService.get_vendors(self.company_id)
+            
+            prev_vend = self.vendor_cb.currentData()
+            prev_vend_text = self.vendor_cb.currentText()
+            self.vendor_cb.clear()
+            for v in self.vendors:
+                self.vendor_cb.addItem(v['name'], v['id'])
+                
+            if prev_vend:
+                idx = self.vendor_cb.findData(prev_vend)
+                if idx >= 0:
+                    self.vendor_cb.setCurrentIndex(idx)
+                else:
+                    self.vendor_cb.addItem(prev_vend_text, prev_vend)
+                    self.vendor_cb.setCurrentIndex(self.vendor_cb.count() - 1)
+            else:
+                self.vendor_cb.setCurrentIndex(-1)
 
     def _on_vendor_entered(self):
         text = self.vendor_cb.lineEdit().text().strip()
@@ -353,5 +411,7 @@ class CreateBillDialog(QDialog):
             "vendor_id": self.vendor_cb.currentData(),
             "amount": self.amount_input.value(),
             "bill_date": self.date_edit.date().toPython(),
-            "description": self.description_input.toPlainText().strip()
+            "description": self.description_input.toPlainText().strip(),
+            "company_id": getattr(self, "company_id", None)
         }
+

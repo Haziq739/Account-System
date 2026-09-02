@@ -19,8 +19,18 @@ class InvoiceService:
                 elif "K Dynamics" in comp.name:
                     prefix = "KD"
             
-            count = s.query(Invoice).filter(Invoice.company_id == company_id).count()
-            seq = count + 1
+            invoices = s.query(Invoice.invoice_number).filter(Invoice.invoice_number.like(f"{prefix}-%")).all()
+            max_seq = 0
+            for (inv_num,) in invoices:
+                if inv_num and inv_num.startswith(f"{prefix}-"):
+                    try:
+                        seq = int(inv_num.split('-')[-1])
+                        if seq > max_seq:
+                            max_seq = seq
+                    except ValueError:
+                        pass
+                        
+            seq = max_seq + 1
             return f"{prefix}-{seq:03d}"
 
     @staticmethod
@@ -236,6 +246,7 @@ class InvoiceService:
     @staticmethod
     def update_invoice(
         inv_id: int,
+        company_id: int,
         customer_id: int,
         items: List[Dict[str, Any]], 
         discount: float,
@@ -247,6 +258,54 @@ class InvoiceService:
             inv = s.query(Invoice).filter(Invoice.id == inv_id).first()
             if not inv:
                 return False
+                
+            # Migrate company if changed
+            if inv.company_id != company_id:
+                inv.company_id = company_id
+                
+                # Migrate Customer and their Ledgers
+                from models.customer import Customer
+                from models.ledger import CustomerLedger
+                from models.payment import Payment
+                
+                cust = s.query(Customer).filter(Customer.id == customer_id).first()
+                if cust and cust.company_id != company_id:
+                    new_cust = s.query(Customer).filter(Customer.company_id == company_id, Customer.name == cust.name).first()
+                    if not new_cust:
+                        new_cust = Customer(
+                            company_id=company_id,
+                            name=cust.name,
+                            phone=cust.phone,
+                            email=cust.email,
+                            address=cust.address,
+                            company_name=cust.company_name,
+                            customer_type=cust.customer_type
+                        )
+                        s.add(new_cust)
+                        s.flush()
+                    customer_id = new_cust.id
+                    
+                    # Update ONLY ledgers/payments for THIS invoice to the new company and customer
+                    s.query(CustomerLedger).filter(CustomerLedger.reference_id == inv.invoice_number).update({"company_id": company_id, "customer_id": customer_id})
+                    s.query(Payment).filter(Payment.invoice_id == inv.id).update({"company_id": company_id, "customer_id": customer_id})
+                    
+                # Migrate Services
+                from models.service import Service
+                for item in items:
+                    srv = s.query(Service).filter(Service.id == item["service_id"]).first()
+                    if srv and srv.company_id != company_id:
+                        new_srv = s.query(Service).filter(Service.company_id == company_id, Service.name == srv.name).first()
+                        if not new_srv:
+                            new_srv = Service(
+                                company_id=company_id,
+                                category=srv.category,
+                                name=srv.name,
+                                description=srv.description,
+                                default_price=srv.default_price
+                            )
+                            s.add(new_srv)
+                            s.flush()
+                        item["service_id"] = new_srv.id
                 
             # Clear old items
             s.query(InvoiceItem).filter(InvoiceItem.invoice_id == inv_id).delete()

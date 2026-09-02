@@ -22,6 +22,9 @@ $iscc = "$env:ProgramFiles (x86)\Inno Setup 6\ISCC.exe"
 if (-not (Test-Path $iscc)) {
     $iscc = "$env:ProgramFiles\Inno Setup 6\ISCC.exe"
 }
+if (-not (Test-Path $iscc)) {
+    $iscc = "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe"
+}
 
 if (-not (Test-Path $iscc)) {
     Write-Host "Inno Setup not found. Installing via winget..."

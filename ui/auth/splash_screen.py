@@ -129,7 +129,7 @@ class SplashScreen(QWidget):
         bottom = QHBoxLayout()
         loading = QLabel("Initializing, please wait…")
         loading.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; background: transparent;")
-        version = QLabel("v1.0.0")
+        version = QLabel("v1.0.2")
         version.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; background: transparent;")
         bottom.addWidget(loading)
         bottom.addStretch()
