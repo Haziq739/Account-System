@@ -279,6 +279,7 @@ class VendorBillsPage(QWidget):
                     vendor_id=data["vendor_id"],
                     description=data["description"],
                     amount=data["amount"],
+                    withholding_tax_percentage=data.get("withholding_tax_percentage", 0.0),
                     bill_date=data["bill_date"],
                     user_id=self.current_user["id"]
                 )

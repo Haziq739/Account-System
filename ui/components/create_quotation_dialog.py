@@ -21,6 +21,7 @@ def _btn(text: str, primary: bool = False, icon: str = "") -> QPushButton:
 
 
 from ui.components.dynamic_add_dialog import DynamicAddDialog
+from ui.components.service_details_dialog import ServiceDetailsDialog
 
 class CreateQuotationDialog(QDialog):
 
@@ -40,6 +41,8 @@ class CreateQuotationDialog(QDialog):
         self.filtered_services = []
         self.items_data = [] # list of dicts
         self.advance_payment_id = None
+        self._is_loading = False
+        self._suppress_popup = False
         
         self.tax_enabled = False
         self.tax_rate = 0.0
@@ -74,7 +77,8 @@ class CreateQuotationDialog(QDialog):
         if self.quotation_id:
             self._load_existing_quotation()
         else:
-            self._calculate_totals()
+            self._is_loading = False
+        self._calculate_totals()
 
     def accept(self):
         pass
@@ -93,6 +97,7 @@ class CreateQuotationDialog(QDialog):
         self.tax_input.setText(str(inv["tax_percentage"]))
         self.notes_input.setText(inv["notes"] or "")
         
+        self._is_loading = True
         for item in inv["items"]:
             self._add_item_row(item)
             
@@ -103,11 +108,15 @@ class CreateQuotationDialog(QDialog):
             self.all_companies = [{"id": c.id, "name": c.name} for c in s.query(Company).all()]
             comp = s.query(Company).filter(Company.id == self.company_id).first()
             if comp:
+                self.company_name = comp.name
                 self.tax_enabled = comp.tax_enabled
                 self.tax_rate = float(comp.default_tax_rate)
                 
         self.customers = CustomerService.get_customers(self.company_id, customer_type=self.context)
         self.all_services = ServiceCatalogue.get_services(self.company_id)
+        
+        if "K Dynamics" in getattr(self, 'company_name', ''):
+            self.setMinimumSize(900, 735)
 
 
     def keyPressEvent(self, event):
@@ -122,7 +131,7 @@ class CreateQuotationDialog(QDialog):
             cb.setMaxVisibleItems(7)
             v = QListView()
             v.setStyleSheet(f"""
-                QListView {{ outline: 0px; padding-top: 3px; padding-bottom: 0px; padding-left: 1px; padding-right: 1px; margin: 0px; background-color: {COLORS['bg_card']}; color: {COLORS['text_primary']}; border: 1px solid {COLORS['border']}; border-radius: 0px; }}
+                QListView {{ outline: 0px; padding: 0px; margin: 0px; background-color: {COLORS['bg_card']}; color: {COLORS['text_primary']}; border: 1px solid {COLORS['border']}; border-radius: 0px; }}
                 QListView::item {{ padding: 8px; border: none; }}
                 QListView::item:selected, QListView::item:hover {{ background-color: {COLORS['primary']}; color: white; border: none; }}
             """)
@@ -140,8 +149,8 @@ class CreateQuotationDialog(QDialog):
             comp_layout = QVBoxLayout()
             comp_layout.addWidget(QLabel("Company *"))
             self.company_cb = QComboBox()
-            _fix_cb(self.company_cb)
             self.company_cb.setEditable(True)
+            _fix_cb(self.company_cb)
             self.company_cb.lineEdit().setReadOnly(True)
             self.company_cb.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
             for c in self.all_companies:
@@ -156,8 +165,8 @@ class CreateQuotationDialog(QDialog):
         cust_layout = QVBoxLayout()
         cust_layout.addWidget(QLabel("Customer *"))
         self.customer_cb = QComboBox()
-        _fix_cb(self.customer_cb)
         self.customer_cb.setEditable(True)
+        _fix_cb(self.customer_cb)
         self.customer_cb.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
         self.customer_cb.lineEdit().setPlaceholderText("Search or enter new customer...")
         for c in self.customers:
@@ -173,7 +182,7 @@ class CreateQuotationDialog(QDialog):
         from PySide6.QtWidgets import QFrame
         popup.setFrameShape(QFrame.Shape.NoFrame)
         popup.setStyleSheet(f"""
-            QListView {{ outline: 0px; padding-top: 3px; padding-bottom: 0px; padding-left: 1px; padding-right: 1px; margin: 0px; background-color: {COLORS['bg_card']}; color: {COLORS['text_primary']}; border: 1px solid {COLORS['border']}; border-radius: 0px; }}
+            QListView {{ outline: 0px; padding: 0px; margin: 0px; background-color: {COLORS['bg_card']}; color: {COLORS['text_primary']}; border: 1px solid {COLORS['border']}; border-radius: 0px; }}
             QListView::item {{ padding: 8px; border: none; }}
             QListView::item:selected, QListView::item:hover {{ background-color: {COLORS['primary']}; color: white; border: none; }}
         """)
@@ -187,8 +196,8 @@ class CreateQuotationDialog(QDialog):
         
         # ── Items Table ────────────────────────────────────────────
         self.table = QTableWidget()
-        self.table.setColumnCount(7)
-        self.table.setHorizontalHeaderLabels(["S.No", "Service", "Description", "Qty", "Price", "Amount", ""])
+        self.table.setColumnCount(8)
+        self.table.setHorizontalHeaderLabels(["S.No", "Service", "Description", "Qty", "Price", "Amount", "", ""])
         
         self.table.setStyleSheet(f"""
             QTableWidget {{
@@ -225,15 +234,17 @@ class CreateQuotationDialog(QDialog):
         h.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
         h.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
         h.setSectionResizeMode(6, QHeaderView.ResizeMode.Fixed)
-        self.table.setColumnWidth(6, 40)
+        h.setSectionResizeMode(7, QHeaderView.ResizeMode.Fixed)
+        self.table.setColumnWidth(6, 32)
+        self.table.setColumnWidth(7, 32)
         
         root.addWidget(self.table)
         
         srv_search_layout = QVBoxLayout()
         srv_search_layout.addWidget(QLabel("Service Search *", styleSheet=f"color: {COLORS['text_primary']}; font-weight: 500; font-size: 13px;"))
         self.service_cb = QComboBox()
-        _fix_cb(self.service_cb)
         self.service_cb.setEditable(True)
+        _fix_cb(self.service_cb)
         self.service_cb.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
         self.service_cb.lineEdit().setPlaceholderText("Search or enter new service...")
         self._populate_service_cb()
@@ -245,7 +256,7 @@ class CreateQuotationDialog(QDialog):
         
         srv_popup = srv_completer.popup()
         srv_popup.setStyleSheet(f"""
-            QListView {{ outline: 0px; padding-top: 3px; padding-bottom: 0px; padding-left: 1px; padding-right: 1px; margin: 0px; background-color: {COLORS['bg_card']}; color: {COLORS['text_primary']}; border: 1px solid {COLORS['border']}; border-radius: 0px; }}
+            QListView {{ outline: 0px; padding: 0px; margin: 0px; background-color: {COLORS['bg_card']}; color: {COLORS['text_primary']}; border: 1px solid {COLORS['border']}; border-radius: 0px; }}
             QListView::item {{ padding: 8px; border: none; }}
             QListView::item:selected {{ background-color: {COLORS['primary']}; color: white; border: none; }}
         """)
@@ -311,12 +322,34 @@ class CreateQuotationDialog(QDialog):
         totals_grid.addWidget(self.tax_amt_lbl, row, 1)
         row += 1
         
+        self.w_tax_label_ui = QLabel("W. Tax (%):")
+        totals_grid.addWidget(self.w_tax_label_ui, row, 0)
+        default_w_tax = "5.0" if getattr(self, "company_name", "").find("K Dynamics") >= 0 else "0.0"
+        self.w_tax_input = QLineEdit(default_w_tax)
+        self.w_tax_input.setFixedWidth(100)
+        self.w_tax_input.textChanged.connect(self._calculate_totals)
+        totals_grid.addWidget(self.w_tax_input, row, 1)
+        row += 1
+        
+        self.w_tax_amt_lbl_ui = QLabel("W. Tax Amount:")
+        totals_grid.addWidget(self.w_tax_amt_lbl_ui, row, 0)
+        self.w_tax_amt_lbl = QLabel("0.00")
+        totals_grid.addWidget(self.w_tax_amt_lbl, row, 1)
+        row += 1
+        
         if not self.tax_enabled:
             self.tax_label_ui.hide()
             self.tax_input.hide()
             self.tax_amt_lbl_ui.hide()
             self.tax_amt_lbl.hide()
             self.tax_input.setText("0.0")
+            
+        if getattr(self, "company_name", "").find("K Dynamics") < 0:
+            self.w_tax_label_ui.hide()
+            self.w_tax_input.hide()
+            self.w_tax_amt_lbl_ui.hide()
+            self.w_tax_amt_lbl.hide()
+            self.w_tax_input.setText("0.0")
 
         totals_grid.addWidget(QLabel("Net Total:", styleSheet="font-weight: bold;"), row, 0)
         self.net_total_lbl = QLabel("0.00", styleSheet="font-weight: bold; font-size: 16px;")
@@ -383,25 +416,29 @@ class CreateQuotationDialog(QDialog):
             if srv_id:
                 srv = next((s for s in self.all_services if s["id"] == srv_id), None)
                 if srv:
+                    self._suppress_popup = True
                     self._add_item_row()
                     row = self.table.rowCount() - 1
                     row_srv_cb = self.table.cellWidget(row, 1)
                     idx = row_srv_cb.findData(srv_id)
                     if idx >= 0: row_srv_cb.setCurrentIndex(idx)
+                    self._suppress_popup = False
+                    self._on_service_selected(row)
                     self.service_cb.lineEdit().clear()
             return
             
-        dlg = DynamicAddDialog(self, "Add Service", f"Service '{text}' not found.\nDo you want to add this service?", "Default Price (Required)", "Description (Required)")
+        dlg = ServiceDetailsDialog(self, is_new_service=True, service_name=text)
         if dlg.exec():
-            price_text, desc_text = dlg.get_inputs()
+            price, final_desc = dlg.get_inputs()
             try:
-                price = float(price_text)
-                new_srv = ServiceCatalogue.create_service(self.company_id, "General", text, desc_text, price, self.current_user["id"])
+                new_srv = ServiceCatalogue.create_service(self.company_id, "General", text, final_desc, price, self.current_user["id"])
                 self.all_services = ServiceCatalogue.get_services(self.company_id)
                 self.filtered_services = self.all_services
                 
                 self._populate_service_cb()
+                self._suppress_popup = True
                 self._add_item_row()
+                self._suppress_popup = False
                 row = self.table.rowCount() - 1
                 row_srv_cb = self.table.cellWidget(row, 1)
                 idx = row_srv_cb.findData(new_srv["id"])
@@ -451,13 +488,21 @@ class CreateQuotationDialog(QDialog):
         amt_lbl.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: 500;")
         self.table.setCellWidget(row, 5, amt_lbl)
         
+        # Edit btn
+        edit_btn = QPushButton("Edit")
+        edit_btn.setFixedSize(24, 24)
+        edit_btn.setStyleSheet("border: none; background: transparent; font-size: 12px;")
+        edit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        edit_btn.clicked.connect(lambda _, r=row: self._edit_item_row(r))
+        self.table.setCellWidget(row, 6, edit_btn)
+        
         # Delete btn
         del_btn = QPushButton("❌")
         del_btn.setFixedSize(24, 24)
         del_btn.setStyleSheet("border: none; background: transparent; font-size: 12px; color: #E53E3E;")
         del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         del_btn.clicked.connect(lambda _, r=row: self._remove_item_row(r))
-        self.table.setCellWidget(row, 6, del_btn)
+        self.table.setCellWidget(row, 7, del_btn)
         
         # Connections for live calculations
         srv_cb.currentIndexChanged.connect(lambda: self._on_service_selected(row))
@@ -465,15 +510,19 @@ class CreateQuotationDialog(QDialog):
         price_input.textChanged.connect(self._calculate_totals)
         
         if existing_item:
+            self._is_loading = True
             idx = srv_cb.findData(existing_item["service_id"])
             if idx >= 0: srv_cb.setCurrentIndex(idx)
             desc_input.setText(existing_item.get("description", ""))
             qty_input.setText(str(existing_item.get("quantity", 1)))
             price_input.setText(str(existing_item.get("unit_price", 0)))
+            self._is_loading = False
         else:
-            self._on_service_selected(row)
+            if not self._suppress_popup:
+                self._on_service_selected(row)
 
     def _on_service_selected(self, row: int):
+        if self._is_loading or self._suppress_popup: return
         srv_cb = self.table.cellWidget(row, 1)
         desc_input = self.table.cellWidget(row, 2)
         price_input = self.table.cellWidget(row, 4)
@@ -481,9 +530,35 @@ class CreateQuotationDialog(QDialog):
             sid = srv_cb.currentData()
             srv = next((s for s in self.filtered_services if s["id"] == sid), None)
             if srv:
-                price_input.setText(str(srv["price"]))
-                desc_input.setText(srv.get("description", ""))
+                # Pop up the details dialog for existing service
+                dlg = ServiceDetailsDialog(self, is_new_service=False, service_name=srv["name"], 
+                                           default_price=srv["price"], default_desc=srv.get("description", ""))
+                if dlg.exec():
+                    price, final_desc = dlg.get_inputs()
+                    price_input.setText(str(price))
+                    desc_input.setText(final_desc)
+                else:
+                    # Cancelled, fallback to defaults but no popup
+                    price_input.setText(str(srv["price"]))
+                    desc_input.setText(srv.get("description", ""))
         self._calculate_totals()
+        
+    def _edit_item_row(self, row: int):
+        srv_cb = self.table.cellWidget(row, 1)
+        desc_input = self.table.cellWidget(row, 2)
+        price_input = self.table.cellWidget(row, 4)
+        if srv_cb and price_input and desc_input:
+            current_price = price_input.text()
+            current_desc = desc_input.text()
+            
+            dlg = ServiceDetailsDialog(self, is_new_service=False, service_name=srv_cb.currentText(), 
+                                       default_price=float(current_price) if current_price else 0.0, 
+                                       default_desc=current_desc)
+            if dlg.exec():
+                price, final_desc = dlg.get_inputs()
+                price_input.setText(str(price))
+                desc_input.setText(final_desc)
+                self._calculate_totals()
 
     def _remove_item_row(self, row_idx: int):
         self.table.removeRow(row_idx)
@@ -493,9 +568,16 @@ class CreateQuotationDialog(QDialog):
             if item:
                 item.setText(str(r + 1))
             # update delete button lambda to match new row index
-            del_btn = self.table.cellWidget(r, 6)
+            edit_btn = self.table.cellWidget(r, 6)
+            if edit_btn:
+                try: edit_btn.clicked.disconnect()
+                except: pass
+                edit_btn.clicked.connect(lambda _, current_r=r: self._edit_item_row(current_r))
+                
+            del_btn = self.table.cellWidget(r, 7)
             if del_btn:
-                del_btn.clicked.disconnect()
+                try: del_btn.clicked.disconnect()
+                except: pass
                 del_btn.clicked.connect(lambda _, current_r=r: self._remove_item_row(current_r))
                 
         self._calculate_totals()
@@ -540,7 +622,12 @@ class CreateQuotationDialog(QDialog):
         tax_amt = after_disc * (tax_pct / 100.0)
         self.tax_amt_lbl.setText(f"{tax_amt:.2f}")
         
-        net = after_disc + tax_amt
+        w_tax_pct = self._get_float(self.w_tax_input.text()) if hasattr(self, 'w_tax_input') else 0.0
+        w_tax_amt = after_disc * (w_tax_pct / 100.0)
+        if hasattr(self, 'w_tax_amt_lbl'):
+            self.w_tax_amt_lbl.setText(f"{w_tax_amt:.2f}")
+        
+        net = after_disc + tax_amt + w_tax_amt
         self.net_total_lbl.setText(f"{net:.2f}")
 
     def _save(self):
@@ -555,26 +642,40 @@ class CreateQuotationDialog(QDialog):
             
         disc = self._get_float(self.discount_input.text())
         tax = self._get_float(self.tax_input.text()) if self.tax_enabled else 0.0
-        net = self._get_float(self.net_total_lbl.text())
-        
+        w_tax = self._get_float(self.w_tax_input.text()) if hasattr(self, 'w_tax_input') else 0.0
+        valid_date = self.validity_input.date().toPython()
         notes = self.notes_input.toPlainText().strip()
         
         try:
-            if self.quotation_id:
+            if self.quotation_data:
                 QuotationService.update_quotation(
-                    self.quotation_id, self.company_id, cust_id, self.items_data, disc, tax, notes, self.current_user["id"]
+                    quotation_id=self.quotation_data.id,
+                    company_id=self.company_id,
+                    customer_id=cust_id,
+                    items=self.items_data,
+                    discount=disc,
+                    tax_percentage=tax,
+                    withholding_tax_percentage=w_tax,
+                    notes=notes,
+                    user_id=self.current_user["id"]
                 )
                 show_message(self, "success", "Success", "Quotation updated successfully!")
-                self._auto_save_quotation_pdf(self.quotation_id)
+                self._auto_save_quotation_pdf(self.quotation_data.id)
             else:
-                from datetime import timedelta
-                valid_until = date.today() + timedelta(days=30)
-                inv_res = QuotationService.create_quotation(
-                    self.company_id, cust_id, date.today(), valid_until,
-                    self.items_data, disc, tax, notes, self.current_user["id"]
+                q_res = QuotationService.create_quotation(
+                    company_id=self.company_id,
+                    customer_id=cust_id,
+                    issue_date=date.today(),
+                    valid_until=valid_date,
+                    items=self.items_data,
+                    discount=disc,
+                    tax_percentage=tax,
+                    withholding_tax_percentage=w_tax,
+                    notes=notes,
+                    user_id=self.current_user["id"]
                 )
                 show_message(self, "success", "Success", "Quotation generated successfully!")
-                self._auto_save_quotation_pdf(inv_res["quotation_id"])
+                self._auto_save_quotation_pdf(q_res["id"])
                     
             self._force_accept()
         except Exception as e:

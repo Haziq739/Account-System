@@ -18,6 +18,8 @@ class Invoice(Base, TimestampMixin):
     discount: Mapped[float] = mapped_column(Numeric(12, 2), default=0.0)
     tax_percentage: Mapped[float] = mapped_column(Numeric(5, 2), default=0.0)
     tax_amount: Mapped[float] = mapped_column(Numeric(12, 2), default=0.0)
+    withholding_tax_percentage: Mapped[float] = mapped_column(Numeric(5, 2), default=0.0)
+    withholding_tax_amount: Mapped[float] = mapped_column(Numeric(12, 2), default=0.0)
     net_amount: Mapped[float] = mapped_column(Numeric(12, 2), default=0.0)
     
     paid_amount: Mapped[float] = mapped_column(Numeric(12, 2), default=0.0)

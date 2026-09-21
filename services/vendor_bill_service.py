@@ -61,18 +61,22 @@ class VendorBillService:
         vendor_id: int,
         description: str,
         amount: float,
+        withholding_tax_percentage: float,
         bill_date: date,
         user_id: int = None
     ) -> Dict[str, Any]:
         with SessionLocal() as s:
             bill_number = VendorBillService.generate_bill_number(company_id)
             
+            withholding_tax_amount = amount * (withholding_tax_percentage / 100.0)
             new_bill = VendorBill(
                 company_id=company_id,
                 vendor_id=vendor_id,
                 bill_number=bill_number,
                 description=description,
                 amount=amount,
+                withholding_tax_percentage=withholding_tax_percentage,
+                withholding_tax_amount=withholding_tax_amount,
                 bill_date=bill_date
             )
             s.add(new_bill)
@@ -109,6 +113,7 @@ class VendorBillService:
         vendor_id: int,
         description: str,
         amount: float,
+        withholding_tax_percentage: float,
         user_id: int = None
     ) -> bool:
         with SessionLocal() as s:
@@ -139,15 +144,20 @@ class VendorBillService:
                         s.flush()
                     vendor_id = new_vend.id
                     
+                old_bill_number = b.bill_number
+                new_bill_number = VendorBillService.generate_bill_number(company_id)
+                b.bill_number = new_bill_number
+
                 from models.expense import Expense
                 exp = s.query(Expense).filter(
                     Expense.company_id == old_comp_id,
-                    Expense.title == f"Vendor Bill {b.bill_number}",
+                    Expense.title == f"Vendor Bill {old_bill_number}",
                     Expense.is_deleted == False
                 ).first()
                 if exp:
                     exp.company_id = company_id
                     exp.vendor_id = vendor_id
+                    exp.title = f"Vendor Bill {new_bill_number}"
                 
             b.vendor_id = vendor_id
             b.description = description

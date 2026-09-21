@@ -69,12 +69,6 @@ class AddExpenseDialog(QDialog):
         super().keyPressEvent(event)
 
     def _build(self):
-        def _fix_cb(cb):
-            from PySide6.QtWidgets import QListView, QStyledItemDelegate
-            cb.setMaxVisibleItems(7)
-            v = QListView()
-            cb.setView(v)
-            cb.setItemDelegate(QStyledItemDelegate())
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
@@ -133,7 +127,7 @@ class AddExpenseDialog(QDialog):
             from PySide6.QtWidgets import QFrame
             popup.setFrameShape(QFrame.Shape.NoFrame)
             popup.setStyleSheet(f"""
-                QListView {{ outline: 0px; padding-top: 3px; padding-bottom: 0px; padding-left: 1px; padding-right: 1px; margin: 0px; background-color: {COLORS['bg_card']}; color: {COLORS['text_primary']}; border: 1px solid {COLORS['border']}; border-radius: 0px; }}
+                QListView {{ outline: 0px; padding: 0px; margin: 0px; background-color: {COLORS['bg_card']}; color: {COLORS['text_primary']}; border: 1px solid {COLORS['border']}; border-radius: 0px; }}
                 QListView::item {{ padding: 8px; border: none; }}
                 QListView::item:selected, QListView::item:hover {{ background-color: {COLORS['primary']}; color: white; border: none; }}
             """)

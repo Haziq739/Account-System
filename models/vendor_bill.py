@@ -13,6 +13,9 @@ class VendorBill(Base, TimestampMixin):
     bill_number: Mapped[str] = mapped_column(String(50), index=True)
     description: Mapped[str | None] = mapped_column(Text)
     amount: Mapped[float] = mapped_column(Numeric(12, 2))
+    withholding_tax_percentage: Mapped[float] = mapped_column(Numeric(5, 2), default=0.0)
+    withholding_tax_amount: Mapped[float] = mapped_column(Numeric(12, 2), default=0.0)
+    net_amount: Mapped[float] = mapped_column(Numeric(12, 2), default=0.0)
     bill_date: Mapped[date] = mapped_column(Date, default=date.today, index=True)
     
     is_deleted: Mapped[bool] = mapped_column(default=False, index=True)

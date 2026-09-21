@@ -161,7 +161,7 @@ class PDFGenerator:
                     f"{float(item.total_price):.2f}"
                 ])
             # Pad with empty rows for standard table size
-            min_rows = 12
+            min_rows = 8 if "K Dynamics" in comp.name else 12
             while len(data) <= min_rows:
                 data.append(["", "", "", "", ""])
                 
@@ -193,7 +193,7 @@ class PDFGenerator:
             remaining = float(inv.net_amount) - float(inv.paid_amount)
             totals.append(["Remaining:", f"{remaining:.2f}"])
             
-            t_totals = Table(totals, colWidths=[200, 100])
+            t_totals = Table(totals, colWidths=[150, 100])
             t_totals.setStyle(TableStyle([
                 ('ALIGN', (0,0), (-1,-1), 'RIGHT'),
                 ('FONTNAME', (0,-1), (-1,-1), 'Helvetica-Bold'),
@@ -204,8 +204,37 @@ class PDFGenerator:
             ]))
             
             # wrap it inside an outer table to align it to the right
-            totals_outer = Table([["", t_totals]], colWidths=[200, 300])
-            totals_outer.setStyle(TableStyle([('ALIGN', (1,0), (1,0), 'RIGHT')]))
+            bd_container = ""
+            if "K Dynamics" in comp.name:
+                bd_elements = []
+                bd_elements.append(Paragraph("<b>BANK ACCOUNT DETAILS:</b>", styles['Normal']))
+                bd_data = [
+                    ["Name of Firm:", "K Dynamics Pvt Ltd."],
+                    ["Banker Name:", "United Bank Limited"],
+                    ["Address:", "Fazal e Haq Road Branch(1748)"],
+                    ["IBAN Number:", "PK06 UNIL 0109 0003 2960 7942"],
+                    ["Account Numbers:", "0109 0003 2960 7942"],
+                    ["Branch Code:", "1748"]
+                ]
+                bd_table = Table(bd_data, colWidths=[100, 150])
+                bd_table.setStyle(TableStyle([
+                    ('FONTNAME', (0,0), (-1,-1), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0,0), (-1,-1), 8),
+                    ('ALIGN', (0,0), (0,-1), 'LEFT'),
+                    ('ALIGN', (1,0), (1,-1), 'LEFT'),
+                    ('BOTTOMPADDING', (0,0), (-1,-1), 1),
+                    ('TOPPADDING', (0,0), (-1,-1), 1),
+                ]))
+                bd_elements.append(bd_table)
+                bd_elements.append(Spacer(1, 5))
+                bd_elements.append(Paragraph("<font size=8><b>GST/NTN:</b> Sales Tax Reg. No. is 3277876363483 and Our NTN No .is G650435</font>", styles['Normal']))
+                bd_container = bd_elements
+
+            totals_outer = Table([[bd_container, t_totals]], colWidths=[250, 250])
+            totals_outer.setStyle(TableStyle([
+                ('ALIGN', (1,0), (1,0), 'RIGHT'),
+                ('VALIGN', (0,0), (-1,-1), 'TOP')
+            ]))
             elements.append(totals_outer)
             
             if inv.notes:
@@ -446,7 +475,7 @@ class PDFGenerator:
                 f"{float(bill.amount):.2f}"
             ])
             # Pad with empty rows for standard table size
-            min_rows = 12
+            min_rows = 8 if "K Dynamics" in comp.name else 12
             while len(data) <= min_rows:
                 data.append(["", ""])
                 
@@ -469,7 +498,7 @@ class PDFGenerator:
                 ["Total Amount:", f"{float(bill.amount):.2f}"]
             ]
             
-            t_totals = Table(totals, colWidths=[200, 100])
+            t_totals = Table(totals, colWidths=[150, 100])
             t_totals.setStyle(TableStyle([
                 ('ALIGN', (0,0), (-1,-1), 'RIGHT'),
                 ('FONTNAME', (0,-1), (-1,-1), 'Helvetica-Bold'),
@@ -478,8 +507,37 @@ class PDFGenerator:
                 ('TOPPADDING', (0,0), (-1,-1), 5),
                 ('BOTTOMPADDING', (0,0), (-1,-1), 5),
             ]))
-            totals_outer = Table([["", t_totals]], colWidths=[200, 300])
-            totals_outer.setStyle(TableStyle([('ALIGN', (1,0), (1,0), 'RIGHT')]))
+            bd_container = ""
+            if "K Dynamics" in comp.name:
+                bd_elements = []
+                bd_elements.append(Paragraph("<b>BANK ACCOUNT DETAILS:</b>", styles['Normal']))
+                bd_data = [
+                    ["Name of Firm:", "K Dynamics Pvt Ltd."],
+                    ["Banker Name:", "United Bank Limited"],
+                    ["Address:", "Fazal e Haq Road Branch(1748)"],
+                    ["IBAN Number:", "PK06 UNIL 0109 0003 2960 7942"],
+                    ["Account Numbers:", "0109 0003 2960 7942"],
+                    ["Branch Code:", "1748"]
+                ]
+                bd_table = Table(bd_data, colWidths=[100, 150])
+                bd_table.setStyle(TableStyle([
+                    ('FONTNAME', (0,0), (-1,-1), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0,0), (-1,-1), 8),
+                    ('ALIGN', (0,0), (0,-1), 'LEFT'),
+                    ('ALIGN', (1,0), (1,-1), 'LEFT'),
+                    ('BOTTOMPADDING', (0,0), (-1,-1), 1),
+                    ('TOPPADDING', (0,0), (-1,-1), 1),
+                ]))
+                bd_elements.append(bd_table)
+                bd_elements.append(Spacer(1, 5))
+                bd_elements.append(Paragraph("<font size=8><b>GST/NTN:</b> Sales Tax Reg. No. is 3277876363483 and Our NTN No .is G650435</font>", styles['Normal']))
+                bd_container = bd_elements
+
+            totals_outer = Table([[bd_container, t_totals]], colWidths=[250, 250])
+            totals_outer.setStyle(TableStyle([
+                ('ALIGN', (1,0), (1,0), 'RIGHT'),
+                ('VALIGN', (0,0), (-1,-1), 'TOP')
+            ]))
             elements.append(totals_outer)
             
             if bill.description:
@@ -737,7 +795,7 @@ class PDFGenerator:
                     f"{float(item.total_price):.2f}",
                 ])
 
-            min_rows = 12
+            min_rows = 8 if "K Dynamics" in comp.name else 12
             while len(data) <= min_rows:
                 data.append(["", "", "", "", ""])
 
@@ -762,7 +820,7 @@ class PDFGenerator:
                 totals.append([f"Tax ({float(quot.tax_percentage)}%):", f"{float(quot.tax_amount):.2f}"])
             totals.append(["Net Total:", f"{float(quot.net_amount):.2f}"])
 
-            t_totals = Table(totals, colWidths=[200, 100])
+            t_totals = Table(totals, colWidths=[150, 100])
             t_totals.setStyle(TableStyle([
                 ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
                 ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
@@ -771,8 +829,37 @@ class PDFGenerator:
                 ('TOPPADDING', (0,0), (-1,-1), 5),
                 ('BOTTOMPADDING', (0,0), (-1,-1), 5),
             ]))
-            totals_outer = Table([["", t_totals]], colWidths=[200, 300])
-            totals_outer.setStyle(TableStyle([('ALIGN', (1,0), (1,0), 'RIGHT')]))
+            bd_container = ""
+            if "K Dynamics" in comp.name:
+                bd_elements = []
+                bd_elements.append(Paragraph("<b>BANK ACCOUNT DETAILS:</b>", styles['Normal']))
+                bd_data = [
+                    ["Name of Firm:", "K Dynamics Pvt Ltd."],
+                    ["Banker Name:", "United Bank Limited"],
+                    ["Address:", "Fazal e Haq Road Branch(1748)"],
+                    ["IBAN Number:", "PK06 UNIL 0109 0003 2960 7942"],
+                    ["Account Numbers:", "0109 0003 2960 7942"],
+                    ["Branch Code:", "1748"]
+                ]
+                bd_table = Table(bd_data, colWidths=[100, 150])
+                bd_table.setStyle(TableStyle([
+                    ('FONTNAME', (0,0), (-1,-1), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0,0), (-1,-1), 8),
+                    ('ALIGN', (0,0), (0,-1), 'LEFT'),
+                    ('ALIGN', (1,0), (1,-1), 'LEFT'),
+                    ('BOTTOMPADDING', (0,0), (-1,-1), 1),
+                    ('TOPPADDING', (0,0), (-1,-1), 1),
+                ]))
+                bd_elements.append(bd_table)
+                bd_elements.append(Spacer(1, 5))
+                bd_elements.append(Paragraph("<font size=8><b>GST/NTN:</b> Sales Tax Reg. No. is 3277876363483 and Our NTN No .is G650435</font>", styles['Normal']))
+                bd_container = bd_elements
+
+            totals_outer = Table([[bd_container, t_totals]], colWidths=[250, 250])
+            totals_outer.setStyle(TableStyle([
+                ('ALIGN', (1,0), (1,0), 'RIGHT'),
+                ('VALIGN', (0,0), (-1,-1), 'TOP')
+            ]))
             elements.append(totals_outer)
 
             if quot.notes:

@@ -167,8 +167,8 @@ class LedgerService:
                 balance += tx["debit"]
                 balance -= tx["credit"]
                 
-                # For invoices, use the specific row_balance (remaining amount). For others, use running balance.
-                display_balance = tx.get("row_balance", 0.0) if tx["type"] == "invoice" else balance
+                # For all transactions, use the running balance.
+                display_balance = balance
                 
                 results.append({
                     "id": idx + 1,

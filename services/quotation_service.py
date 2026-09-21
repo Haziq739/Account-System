@@ -96,6 +96,7 @@ class QuotationService:
                 "total_amount": float(q.total_amount),
                 "discount": float(q.discount),
                 "tax_percentage": float(q.tax_percentage),
+                "withholding_tax_percentage": float(getattr(q, "withholding_tax_percentage", 0.0)),
                 "tax_amount": float(q.tax_amount),
                 "net_amount": float(q.net_amount),
                 "notes": q.notes,
@@ -112,6 +113,7 @@ class QuotationService:
         items: List[Dict[str, Any]], 
         discount: float,
         tax_percentage: float,
+        withholding_tax_percentage: float,
         notes: str,
         user_id: int
     ) -> Dict[str, Any]:
@@ -122,7 +124,8 @@ class QuotationService:
             # Calculate totals exactly like invoices
             total_amount = sum(item["quantity"] * item["unit_price"] for item in items)
             tax_amount = (total_amount - discount) * (tax_percentage / 100.0)
-            net_amount = (total_amount - discount) + tax_amount
+            withholding_tax_amount = (total_amount - discount) * (withholding_tax_percentage / 100.0)
+            net_amount = (total_amount - discount) + tax_amount + withholding_tax_amount
                 
             q = Quotation(
                 quotation_number=quotation_number,
@@ -135,6 +138,8 @@ class QuotationService:
                 discount=discount,
                 tax_percentage=tax_percentage,
                 tax_amount=tax_amount,
+                withholding_tax_percentage=withholding_tax_percentage,
+                withholding_tax_amount=withholding_tax_amount,
                 net_amount=net_amount,
                 status="pending",
                 notes=notes
@@ -172,6 +177,7 @@ class QuotationService:
         items: List[Dict[str, Any]], 
         discount: float,
         tax_percentage: float,
+        withholding_tax_percentage: float,
         notes: str,
         user_id: int
     ) -> bool:
@@ -206,8 +212,17 @@ class QuotationService:
                         s.flush()
                     customer_id = new_cust.id
                     
-                    # Update ONLY ledgers/payments for THIS quotation if they existed (usually they don't, but just in case)
-                    s.query(CustomerLedger).filter(CustomerLedger.reference_id == q.quotation_number).update({"company_id": company_id, "customer_id": customer_id})
+                    # Generate new quotation number for the new company
+                    old_quotation_number = q.quotation_number
+                    new_quotation_number = QuotationService.generate_quotation_number(company_id)
+                    q.quotation_number = new_quotation_number
+
+                    # Update ledgers for THIS quotation if they existed (usually they don't, but just in case)
+                    s.query(CustomerLedger).filter(CustomerLedger.reference_id == old_quotation_number).update({
+                        "company_id": company_id, 
+                        "customer_id": customer_id,
+                        "reference_id": new_quotation_number
+                    })
                     
                 # Migrate Services
                 from models.service import Service
@@ -233,7 +248,8 @@ class QuotationService:
             # Recalculate
             total_amount = sum(item["quantity"] * item["unit_price"] for item in items)
             tax_amount = (total_amount - discount) * (tax_percentage / 100.0)
-            net_amount = (total_amount - discount) + tax_amount
+            withholding_tax_amount = (total_amount - discount) * (withholding_tax_percentage / 100.0)
+            net_amount = (total_amount - discount) + tax_amount + withholding_tax_amount
                 
             # Update fields
             q.customer_id = customer_id
@@ -241,6 +257,8 @@ class QuotationService:
             q.discount = discount
             q.tax_percentage = tax_percentage
             q.tax_amount = tax_amount
+            q.withholding_tax_percentage = withholding_tax_percentage
+            q.withholding_tax_amount = withholding_tax_amount
             q.net_amount = net_amount
             q.notes = notes
             

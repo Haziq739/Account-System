@@ -13,14 +13,16 @@ class InvoiceService:
             from models.company import Company
             comp = s.query(Company).filter(Company.id == company_id).first()
             prefix = "INV"
+            is_kd = False
             if comp:
                 if "RN Scanner" in comp.name:
                     prefix = "RN"
                 elif "K Dynamics" in comp.name:
                     prefix = "KD"
+                    is_kd = True
             
             invoices = s.query(Invoice.invoice_number).filter(Invoice.invoice_number.like(f"{prefix}-%")).all()
-            max_seq = 0
+            max_seq = 49 if is_kd else 0
             for (inv_num,) in invoices:
                 if inv_num and inv_num.startswith(f"{prefix}-"):
                     try:
@@ -71,6 +73,7 @@ class InvoiceService:
         items: List[Dict[str, Any]], 
         discount: float,
         tax_percentage: float,
+        withholding_tax_percentage: float,
         paid_amount: float,
         payment_method: str,
         notes: str,
@@ -83,7 +86,8 @@ class InvoiceService:
             # Calculate totals
             total_amount = sum(item["quantity"] * item["unit_price"] for item in items)
             tax_amount = (total_amount - discount) * (tax_percentage / 100.0)
-            net_amount = (total_amount - discount) + tax_amount
+            withholding_tax_amount = (total_amount - discount) * (withholding_tax_percentage / 100.0)
+            net_amount = (total_amount - discount) + tax_amount + withholding_tax_amount
             
             # Determine status
             if paid_amount >= net_amount:
@@ -103,6 +107,8 @@ class InvoiceService:
                 discount=discount,
                 tax_percentage=tax_percentage,
                 tax_amount=tax_amount,
+                withholding_tax_percentage=withholding_tax_percentage,
+                withholding_tax_amount=withholding_tax_amount,
                 net_amount=net_amount,
                 paid_amount=paid_amount,
                 payment_method=payment_method,
@@ -235,6 +241,7 @@ class InvoiceService:
                 "total_amount": float(inv.total_amount),
                 "discount": float(inv.discount),
                 "tax_percentage": float(inv.tax_percentage),
+                "withholding_tax_percentage": float(getattr(inv, "withholding_tax_percentage", 0.0)),
                 "tax_amount": float(inv.tax_amount),
                 "net_amount": float(inv.net_amount),
                 "paid_amount": float(inv.paid_amount),
@@ -251,6 +258,7 @@ class InvoiceService:
         items: List[Dict[str, Any]], 
         discount: float,
         tax_percentage: float,
+        withholding_tax_percentage: float,
         notes: str,
         user_id: int
     ) -> bool:
@@ -285,9 +293,27 @@ class InvoiceService:
                         s.flush()
                     customer_id = new_cust.id
                     
-                    # Update ONLY ledgers/payments for THIS invoice to the new company and customer
-                    s.query(CustomerLedger).filter(CustomerLedger.reference_id == inv.invoice_number).update({"company_id": company_id, "customer_id": customer_id})
-                    s.query(Payment).filter(Payment.invoice_id == inv.id).update({"company_id": company_id, "customer_id": customer_id})
+                    # Generate new invoice number for the new company
+                    old_invoice_number = inv.invoice_number
+                    new_invoice_number = InvoiceService.generate_invoice_number(company_id)
+                    inv.invoice_number = new_invoice_number
+
+                    # Update ledgers for THIS invoice to the new company, customer, and new invoice number
+                    s.query(CustomerLedger).filter(CustomerLedger.reference_id == old_invoice_number).update({
+                        "company_id": company_id, 
+                        "customer_id": customer_id,
+                        "reference_id": new_invoice_number
+                    })
+                    
+                    # Update payments and their respective ledger entries
+                    payments = s.query(Payment).filter(Payment.invoice_id == inv.id).all()
+                    for p in payments:
+                        p.company_id = company_id
+                        p.customer_id = customer_id
+                        s.query(CustomerLedger).filter(CustomerLedger.reference_id == p.receipt_number).update({
+                            "company_id": company_id,
+                            "customer_id": customer_id
+                        })
                     
                 # Migrate Services
                 from models.service import Service
@@ -313,7 +339,8 @@ class InvoiceService:
             # Recalculate
             total_amount = sum(item["quantity"] * item["unit_price"] for item in items)
             tax_amount = (total_amount - discount) * (tax_percentage / 100.0)
-            net_amount = (total_amount - discount) + tax_amount
+            withholding_tax_amount = (total_amount - discount) * (withholding_tax_percentage / 100.0)
+            net_amount = (total_amount - discount) + tax_amount + withholding_tax_amount
             
             # Re-evaluate status based on existing paid_amount
             paid = float(inv.paid_amount)
@@ -330,6 +357,8 @@ class InvoiceService:
             inv.discount = discount
             inv.tax_percentage = tax_percentage
             inv.tax_amount = tax_amount
+            inv.withholding_tax_percentage = withholding_tax_percentage
+            inv.withholding_tax_amount = withholding_tax_amount
             inv.net_amount = net_amount
             inv.status = status
             inv.notes = notes

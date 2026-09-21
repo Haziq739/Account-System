@@ -34,7 +34,7 @@ def _fix_cb(cb):
     cb.setMaxVisibleItems(7)
     v = QListView()
     v.setStyleSheet(f"""
-        QListView {{ outline: 0px; padding-top: 3px; padding-bottom: 0px; padding-left: 1px; padding-right: 1px; margin: 0px; background-color: {COLORS['bg_card']}; color: {COLORS['text_primary']}; border: 1px solid {COLORS['border']}; border-radius: 0px; }}
+        QListView {{ outline: 0px; padding: 0px; margin: 0px; background-color: {COLORS['bg_card']}; color: {COLORS['text_primary']}; border: 1px solid {COLORS['border']}; border-radius: 0px; }}
         QListView::item {{ padding: 8px; border: none; }}
         QListView::item:selected, QListView::item:hover {{ background-color: {COLORS['primary']}; color: white; border: none; }}
     """)
@@ -85,12 +85,6 @@ class VendorFormDialog(QDialog):
         super().keyPressEvent(event)
 
     def _build(self):
-        def _fix_cb(cb):
-            from PySide6.QtWidgets import QListView, QStyledItemDelegate
-            cb.setMaxVisibleItems(7)
-            v = QListView()
-            cb.setView(v)
-            cb.setItemDelegate(QStyledItemDelegate())
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(16)
@@ -215,8 +209,8 @@ class CreateBillDialog(QDialog):
         """)
         
         self.vendor_cb = QComboBox()
-        _fix_cb(self.vendor_cb)
         self.vendor_cb.setEditable(True)
+        _fix_cb(self.vendor_cb)
         self.vendor_cb.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
         self.vendor_cb.lineEdit().setPlaceholderText("Search or enter new vendor...")
 
@@ -233,7 +227,7 @@ class CreateBillDialog(QDialog):
         from PySide6.QtWidgets import QFrame
         popup.setFrameShape(QFrame.Shape.NoFrame)
         popup.setStyleSheet(f"""
-            QListView {{ outline: 0px; padding-top: 3px; padding-bottom: 0px; padding-left: 1px; padding-right: 1px; margin: 0px; background-color: {COLORS['bg_card']}; color: {COLORS['text_primary']}; border: 1px solid {COLORS['border']}; border-radius: 0px; }}
+            QListView {{ outline: 0px; padding: 0px; margin: 0px; background-color: {COLORS['bg_card']}; color: {COLORS['text_primary']}; border: 1px solid {COLORS['border']}; border-radius: 0px; }}
             QListView::item {{ padding: 8px; border: none; }}
             QListView::item:selected, QListView::item:hover {{ background-color: {COLORS['primary']}; color: white; border: none; }}
         """)
@@ -272,12 +266,6 @@ class CreateBillDialog(QDialog):
         super().keyPressEvent(event)
 
     def _build(self):
-        def _fix_cb(cb):
-            from PySide6.QtWidgets import QListView, QStyledItemDelegate
-            cb.setMaxVisibleItems(7)
-            v = QListView()
-            cb.setView(v)
-            cb.setItemDelegate(QStyledItemDelegate())
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(16)
@@ -289,8 +277,8 @@ class CreateBillDialog(QDialog):
         if self.is_edit and self.all_companies:
             layout.addWidget(_label("Company *"))
             self.company_cb = QComboBox()
-            _fix_cb(self.company_cb)
             self.company_cb.setEditable(True)
+            _fix_cb(self.company_cb)
             self.company_cb.lineEdit().setReadOnly(True)
             self.company_cb.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
             for c in self.all_companies:
@@ -306,6 +294,19 @@ class CreateBillDialog(QDialog):
         layout.addWidget(_label("Amount *"))
         layout.addWidget(self.amount_input)
         
+        comp_name = next((c["name"] for c in getattr(self, "all_companies", []) if c["id"] == self.company_id), "") if getattr(self, "all_companies", None) else getattr(self.parent(), "active_company_name", "")
+        self.w_tax_input = QDoubleSpinBox()
+        self.w_tax_input.setRange(0, 100)
+        self.w_tax_input.setDecimals(1)
+        self.w_tax_input.setButtonSymbols(QDoubleSpinBox.ButtonSymbols.NoButtons)
+        if comp_name.find("K Dynamics") >= 0:
+            self.w_tax_input.setValue(5.0)
+            layout.addWidget(_label("W. Tax (%)"))
+            layout.addWidget(self.w_tax_input)
+        else:
+            self.w_tax_input.setValue(0.0)
+            self.w_tax_input.hide()
+            
         layout.addWidget(_label("Date *"))
         layout.addWidget(self.date_edit)
         
@@ -410,6 +411,7 @@ class CreateBillDialog(QDialog):
         return {
             "vendor_id": self.vendor_cb.currentData(),
             "amount": self.amount_input.value(),
+            "withholding_tax_percentage": getattr(self, "w_tax_input", None).value() if hasattr(self, "w_tax_input") else 0.0,
             "bill_date": self.date_edit.date().toPython(),
             "description": self.description_input.toPlainText().strip(),
             "company_id": getattr(self, "company_id", None)

@@ -96,12 +96,9 @@ class DashboardPage(QWidget):
         
         root.addLayout(qa_grid)
         
-        # Push everything to the top
-        root.addStretch()
-        
     def _create_quick_btn(self, text: str, action: str) -> QPushButton:
         btn = QPushButton(text)
-        btn.setFixedHeight(70)
+        btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
         btn.setStyleSheet(f"""
             QPushButton {{
